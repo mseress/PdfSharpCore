@@ -38,7 +38,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>StrongnameKey.snk</AssemblyOriginatorKeyFile>
-    <Version>1.50.0-beta5-4</Version>
+    <Version>1.50.0-beta5-5</Version>
     <Description>PdfSharpCore is a unofficial .NETCore/netstandard 2.0 revision to PdfSharp - A .NET library for creating and modifying PDF documents. (Windows/Linux works!)</Description>
     <Product>PdfSharpCore</Product>
     <PackageId>PdfSharpCore.PdfSharp</PackageId>

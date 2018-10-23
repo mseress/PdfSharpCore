@@ -59,7 +59,7 @@ You should import nuget package [System.Text.Encoding.CodePages](https://www.nug
   }
 ```
 Note2:
-Font searching in (1) executing assembly location; (2) Windows/Linux fonts path; (3) when fault, it will replace with stsong.ttf in the embedded resource.
+Font searching in (1) executing assembly location; (2) Windows/Linux fonts path; and (3) stsong.ttf in the embedded resource when font not found.
 
 ### 0-ProtectedPdf
 Use **PdfSharp.Charting** to create a password protected pdf.

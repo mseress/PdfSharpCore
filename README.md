@@ -59,7 +59,7 @@ Note1:
   }
 ```
 Note2:
- - Font searching in (1) executing assembly location; (2) Windows/Linux fonts path; and (3) stsong.ttf in the embedded resource when font not found.
+ - Font searching in (1) executing assembly location; (2) Windows/Linux fonts path; and (3) stsong.ttf (ie. 华文宋体) in the embedded resource when font not found.
  - For style.Font.Name property, the OriginalFontName (eg. SimSun) or FontName (eg. 宋体) both works. If style.Font.Name not set, then Arial is default.
 
 ### 0-ProtectedPdf

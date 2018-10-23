@@ -50,7 +50,7 @@ MigraDoc references PDFsharp as a submodule.
 
 Democrates features of PdfSharpCore components of PdfSharp and MigraDoc.
 
-Note: 
+Note1: 
 You should import nuget package [System.Text.Encoding.CodePages](https://www.nuget.org/packages/System.Text.Encoding.CodePages/), and add lines in Program.cs:
 ```csharp
   static Program()
@@ -58,6 +58,8 @@ You should import nuget package [System.Text.Encoding.CodePages](https://www.nug
       Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
   }
 ```
+Note2:
+Font searching in (1) executing assembly location; (2) Windows/Linux fonts path; and (3) stsong.ttf in the embedded resource when font not found.
 
 ### 0-ProtectedPdf
 Use **PdfSharp.Charting** to create a password protected pdf.

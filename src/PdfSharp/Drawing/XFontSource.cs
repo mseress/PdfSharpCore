@@ -187,10 +187,6 @@ namespace PdfSharp.Drawing
                         fontStream = File.OpenRead(fileName);
                         Debug.WriteLine($"{fileName} retrieved.");
                     }
-                    else
-                    {
-                        Debug.WriteLine($"{fontName} not found.");
-                    }
                 }
 
                 // 3.default

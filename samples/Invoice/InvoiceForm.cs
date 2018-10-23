@@ -82,9 +82,9 @@ namespace Invoice
             // font of the whole document. Or, more exactly, it changes the font of
             // all styles and paragraphs that do not redefine the font.
             //style.Font.Name = "Verdana";
-            //style.Font.Name = "华文宋体";
-            style.Font.Name = "SimSun";
-            style.Font.Name = "宋体";
+            //style.Font.Name = "SimSun"; // OriginalFontName
+            //style.Font.Name = "宋体"; // FontName
+            //Tips: OriginalFontName and FontName both works.
 
             style = this.document.Styles[StyleNames.Header];
             style.ParagraphFormat.AddTabStop("16cm", TabAlignment.Right);
@@ -95,7 +95,6 @@ namespace Invoice
             // Create a new style called Table based on style Normal
             style = this.document.Styles.AddStyle("Table", "Normal");
             //style.Font.Name = "Times New Roman";
-            //style.Font.Name = "华文宋体";
             style.Font.Size = 9;
 
             // Create a new style called Reference based on style Normal

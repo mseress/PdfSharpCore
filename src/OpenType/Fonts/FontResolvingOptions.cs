@@ -31,9 +31,6 @@
 using System.Drawing;
 using System.Drawing.Text;
 #endif
-#if WPF
-using System.Windows.Media;
-#endif
 using PdfSharp.Drawing;
 
 namespace PdfSharp.Fonts

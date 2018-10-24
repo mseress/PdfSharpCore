@@ -31,9 +31,6 @@
 using System.Drawing;
 using System.Drawing.Text;
 #endif
-#if WPF
-using System.Windows.Media;
-#endif
 using PdfSharp.Drawing;
 
 namespace PdfSharp.Fonts
@@ -41,7 +38,7 @@ namespace PdfSharp.Fonts
     /// <summary>
     /// Parameters that affect font selection.
     /// </summary>
-    class FontResolvingOptions
+    public class FontResolvingOptions
     {
         public FontResolvingOptions(XFontStyle fontStyle)
         {

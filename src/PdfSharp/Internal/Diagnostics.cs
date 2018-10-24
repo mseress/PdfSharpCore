@@ -31,13 +31,7 @@ using System;
 using System.Globalization;
 using PdfSharp.Pdf.Content;
 using PdfSharp.Pdf.IO;
-
-#if GDI
 using System.Drawing;
-#endif
-#if WPF
-using System.Windows;
-#endif
 
 namespace PdfSharp.Internal
 {

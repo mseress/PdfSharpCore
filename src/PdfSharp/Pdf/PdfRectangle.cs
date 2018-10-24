@@ -33,9 +33,6 @@ using System.Globalization;
 #if GDI
 using System.Drawing;
 #endif
-#if WPF
-using System.Windows.Media;
-#endif
 using PdfSharp.Drawing;
 using PdfSharp.Pdf.Advanced;
 using PdfSharp.Pdf.IO;
@@ -366,7 +363,7 @@ namespace PdfSharp.Pdf
         }
 
         /// <summary>
-        /// Returns the rectangle as a string in the form «[x1 y1 x2 y2]».
+        /// Returns the rectangle as a string in the form «[x1 y1 x2 y2]?
         /// </summary>
         public override string ToString()
         {

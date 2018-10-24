@@ -35,9 +35,6 @@ using PdfSharp.Internal;
 #if GDI
 using System.Drawing;
 #endif
-#if WPF
-using System.Windows.Media;
-#endif
 
 #pragma warning disable 1591
 

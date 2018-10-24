@@ -210,15 +210,6 @@ namespace PdfSharp.Drawing
         }
 #endif
 
-#if WPF || NETFX_CORE
-        /// <summary>
-        /// Creates an XSize from a System.Drawing.Size.
-        /// </summary>
-        public static XSize FromSize(SysSize size)
-        {
-            return new XSize(size.Width, size.Height);
-        }
-#endif
 
 #if GDI
         /// <summary>

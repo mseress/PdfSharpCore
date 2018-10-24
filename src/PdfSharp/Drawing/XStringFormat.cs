@@ -28,15 +28,8 @@
 #endregion
 
 using System;
-#if CORE
-#endif
-#if GDI
 using System.Drawing;
 using System.Drawing.Drawing2D;
-#endif
-#if WPF
-using System.Windows.Media;
-#endif
 
 namespace PdfSharp.Drawing
 {
@@ -72,9 +65,6 @@ namespace PdfSharp.Drawing
         /// </summary>
         public XStringFormat()
         {
-#if WPF
-            GetType();  // Make ReSharper happy.
-#endif
         }
 
         //TODO public StringFormat(StringFormat format);

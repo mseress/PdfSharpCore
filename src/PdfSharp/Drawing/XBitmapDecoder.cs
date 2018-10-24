@@ -34,14 +34,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-#endif
-#if NETFX_CORE
-using Windows.UI.Xaml.Media.Imaging;
-#endif
 
 namespace PdfSharp.Drawing
 {

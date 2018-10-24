@@ -44,19 +44,9 @@ using GdiFontFamily = System.Drawing.FontFamily;
 using GdiFont = System.Drawing.Font;
 using GdiFontStyle = System.Drawing.FontStyle;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Media;
-using WpfFontFamily = System.Windows.Media.FontFamily;
-using WpfTypeface = System.Windows.Media.Typeface;
-using WpfGlyphTypeface = System.Windows.Media.GlyphTypeface;
-#endif
 using PdfSharp.Fonts;
-#if !EDF_CORE
 using PdfSharp.Drawing;
 using PdfSharp.Internal;
-#endif
 
 using Fixed = System.Int32;
 using FWord = System.Int16;

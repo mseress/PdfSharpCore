@@ -31,25 +31,12 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
-#if CORE || GDI
 using System.Drawing;
 using GdiFontFamily = System.Drawing.FontFamily;
 using GdiFont = System.Drawing.Font;
-#endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Resources;
-using WpfFontFamily = System.Windows.Media.FontFamily;
-using WpfGlyphTypeface = System.Windows.Media.GlyphTypeface;
-using WpfTypeface = System.Windows.Media.Typeface;
-#endif
 using PdfSharp.Drawing;
 using PdfSharp.Fonts.OpenType;
 using PdfSharp.Internal;
-
-#pragma warning disable 1591
-// ReSharper disable RedundantNameQualifier
 
 namespace PdfSharp.Fonts
 {
@@ -80,54 +67,62 @@ namespace PdfSharp.Fonts
             {
                 Lock.EnterFontFactory();
                 // Was this typeface requested before?
-                FontResolverInfo fontResolverInfo;
-                if (FontResolverInfosByName.TryGetValue(typefaceKey, out fontResolverInfo))
-                    return fontResolverInfo;
+                FontResolverInfo result;
+                if (FontResolverInfosByName.TryGetValue(typefaceKey, out result))
+                    return result;
 
                 // Case: This typeface was not yet resolved before.
 
                 // Is there a custom font resolver available?
                 IFontResolver customFontResolver = GlobalFontSettings.FontResolver;
-                if (customFontResolver != null)
+                if (customFontResolver == null)
+                {
+                    // Case: There was no custom font resolver set.
+                    // Use platform font resolver.
+                    // If it was successful resolver info and font source are cached
+                    // automatically by PlatformFontResolver.ResolveTypeface.
+                    result = PlatformFontResolver.ResolveTypeface(familyName, fontResolvingOptions, typefaceKey);
+                }
+                else
                 {
                     // Case: Use custom font resolver.
-                    fontResolverInfo = customFontResolver.ResolveTypeface(familyName, fontResolvingOptions.IsBold, fontResolvingOptions.IsItalic);
+                    result = customFontResolver.ResolveTypeface(familyName, fontResolvingOptions.IsBold, fontResolvingOptions.IsItalic);
 
                     // If resolved by custom font resolver register info and font source.
-                    if (fontResolverInfo != null && !(fontResolverInfo is PlatformFontResolverInfo))
+                    if (result != null && !(result is PlatformFontResolverInfo))
                     {
                         // OverrideStyleSimulations is true only for internal quality tests.
                         if (fontResolvingOptions.OverrideStyleSimulations)
                         {
                             // Override style simulation returned by custom font resolver.
-                            fontResolverInfo = new FontResolverInfo(fontResolverInfo.FaceName, fontResolvingOptions.MustSimulateBold, fontResolvingOptions.MustSimulateItalic, fontResolverInfo.CollectionNumber);
+                            result = new FontResolverInfo(result.FaceName, fontResolvingOptions.MustSimulateBold, fontResolvingOptions.MustSimulateItalic, result.CollectionNumber);
                         }
 
-                        string resolverInfoKey = fontResolverInfo.Key;
+                        string resolverInfoKey = result.Key;
                         FontResolverInfo existingFontResolverInfo;
                         if (FontResolverInfosByName.TryGetValue(resolverInfoKey, out existingFontResolverInfo))
                         {
                             // Case: A new typeface was resolved with the same info as a previous one.
                             // Discard new object an reuse previous one.
-                            fontResolverInfo = existingFontResolverInfo;
+                            result = existingFontResolverInfo;
                             // Associate with typeface key.
-                            FontResolverInfosByName.Add(typefaceKey, fontResolverInfo);
+                            FontResolverInfosByName.Add(typefaceKey, result);
 #if DEBUG
                             // The font source should exist.
-                            Debug.Assert(FontSourcesByName.ContainsKey(fontResolverInfo.FaceName));
+                            Debug.Assert(FontSourcesByName.ContainsKey(result.FaceName));
 #endif
                         }
                         else
                         {
                             // Case: No such font resolver info exists.
                             // Add to both dictionaries.
-                            FontResolverInfosByName.Add(typefaceKey, fontResolverInfo);
-                            Debug.Assert(resolverInfoKey == fontResolverInfo.Key);
-                            FontResolverInfosByName.Add(resolverInfoKey, fontResolverInfo);
+                            FontResolverInfosByName.Add(typefaceKey, result);
+                            Debug.Assert(resolverInfoKey == result.Key);
+                            FontResolverInfosByName.Add(resolverInfoKey, result);
 
                             // Create font source if not yet exists.
                             XFontSource previousFontSource;
-                            if (FontSourcesByName.TryGetValue(fontResolverInfo.FaceName, out previousFontSource))
+                            if (FontSourcesByName.TryGetValue(result.FaceName, out previousFontSource))
                             {
                                 // Case: The font source exists, because a previous font resolver info comes
                                 // with the same face name, but was different in style simulation flags.
@@ -136,28 +131,20 @@ namespace PdfSharp.Fonts
                             else
                             {
                                 // Case: Get font from custom font resolver and create font source.
-                                byte[] bytes = customFontResolver.GetFont(fontResolverInfo.FaceName);
+                                byte[] bytes = customFontResolver.GetFont(result.FaceName);
                                 XFontSource fontSource = XFontSource.GetOrCreateFrom(bytes);
 
                                 // Add font source's font resolver name if it is different to the face name.
-                                if (string.Compare(fontResolverInfo.FaceName, fontSource.FontName, StringComparison.OrdinalIgnoreCase) != 0)
-                                    FontSourcesByName.Add(fontResolverInfo.FaceName, fontSource);
+                                if (string.Compare(result.FaceName, fontSource.FontName, StringComparison.OrdinalIgnoreCase) != 0)
+                                    FontSourcesByName.Add(result.FaceName, fontSource);
                             }
                         }
                     }
                 }
-                else
-                {
-                    // Case: There was no custom font resolver set.
-                    // Use platform font resolver.
-                    // If it was successful resolver info and font source are cached
-                    // automatically by PlatformFontResolver.ResolveTypeface.
-                    fontResolverInfo = PlatformFontResolver.ResolveTypeface(familyName, fontResolvingOptions, typefaceKey);
-                }
 
                 // Return value is null if the typeface could not be resolved.
                 // In this case PDFsharp stops.
-                return fontResolverInfo;
+                return result;
             }
             finally { Lock.ExitFontFactory(); }
         }
@@ -241,6 +228,11 @@ namespace PdfSharp.Fonts
         public static bool TryGetFontSourceByTypefaceKey(string typefaceKey, out XFontSource source)
         {
             return FontSourcesByName.TryGetValue(typefaceKey, out source);
+        }
+
+        public static bool TryGetFontByTypefaceKey(string typefaceKey, out GdiFont font)
+        {
+            return FontsByName.TryGetValue(typefaceKey, out font);
         }
 
         //public static bool TryGetFontSourceByFaceName(string faceName, out XFontSource source)
@@ -373,6 +365,16 @@ namespace PdfSharp.Fonts
             finally { Lock.ExitFontFactory(); }
         }
 
+        public static void CacheExistingFontWithNewTypefaceKey(string typefaceKey, GdiFont font)
+        {
+            try
+            {
+                Lock.EnterFontFactory();
+                FontsByName.Add(typefaceKey, font);
+            }
+            finally { Lock.ExitFontFactory(); }
+        }
+
         internal static string GetFontCachesState()
         {
             StringBuilder state = new StringBuilder();
@@ -431,11 +433,18 @@ namespace PdfSharp.Fonts
         ///// </summary>
         //static readonly Dictionary<string, FontResolverInfo> FontResolverInfosByKey = new Dictionary<string, FontResolverInfo>();
 
+
+        //static readonly Dictionary<string, XFontSource> FontSourcesByTypefaceKey = new Dictionary<string, XFontSource>(StringComparer.OrdinalIgnoreCase);
+
         /// <summary>
         /// Maps typeface key or font name to font source.
         /// </summary>
-        //static readonly Dictionary<string, XFontSource> FontSourcesByTypefaceKey = new Dictionary<string, XFontSource>(StringComparer.OrdinalIgnoreCase);
         static readonly Dictionary<string, XFontSource> FontSourcesByName = new Dictionary<string, XFontSource>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Maps typeface key or font name to font.
+        /// </summary>
+        static readonly Dictionary<string, GdiFont> FontsByName = new Dictionary<string, GdiFont>(StringComparer.OrdinalIgnoreCase);
 
         ///// <summary>
         ///// Maps font name to font source.

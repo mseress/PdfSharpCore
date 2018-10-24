@@ -35,22 +35,10 @@ using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-#endif
-#if !EDF_CORE
 using PdfSharp.Internal;
-#else
-using PdfSharp.Internal;
-#endif
 
 // ReSharper disable RedundantNameQualifier
-#if !EDF_CORE
 namespace PdfSharp.Drawing
-#else
-namespace Edf.Drawing
-#endif
 {
     /// <summary>
     /// Represents a 3-by-3 matrix that represents an affine 2D transformation.
@@ -1038,17 +1026,6 @@ namespace Edf.Drawing
 //#endif
 #endif
 
-#if WPF
-        /// Converts this matrix to a System.Windows.Media.Matrix object.
-        /// <summary>
-        /// </summary>
-        public System.Windows.Media.Matrix ToWpfMatrix()
-        {
-            return (System.Windows.Media.Matrix)this;
-            //return new System.Windows.Media.Matrix(_m11, _m12, _m21, _m22, _offsetX, _offsetY);
-        }
-#endif
-
 #if GDI
         /// <summary>
         /// Explicitly converts a XMatrix to a Matrix.
@@ -1065,21 +1042,6 @@ namespace Edf.Drawing
         }
 #endif
 
-#if WPF
-        /// <summary>
-        /// Explicitly converts an XMatrix to a Matrix.
-        /// </summary>
-        public static explicit operator System.Windows.Media.Matrix(XMatrix matrix)
-        {
-            if (matrix.IsIdentity)
-                return new System.Windows.Media.Matrix();
-
-            return new System.Windows.Media.Matrix(
-              matrix._m11, matrix._m12,
-              matrix._m21, matrix._m22,
-              matrix._offsetX, matrix._offsetY);
-        }
-#endif
 
 #if GDI
         /// <summary>
@@ -1091,17 +1053,7 @@ namespace Edf.Drawing
             return new XMatrix(elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]);
         }
 #endif
-
-#if WPF
-        /// <summary>
-        /// Implicitly converts a Matrix to an XMatrix.
-        /// </summary>
-        public static implicit operator XMatrix(System.Windows.Media.Matrix matrix)
-        {
-            return new XMatrix(matrix.M11, matrix.M12, matrix.M21, matrix.M22, matrix.OffsetX, matrix.OffsetY);
-        }
-#endif
-
+        
         /// <summary>
         /// Determines whether the two matrices are equal.
         /// </summary>

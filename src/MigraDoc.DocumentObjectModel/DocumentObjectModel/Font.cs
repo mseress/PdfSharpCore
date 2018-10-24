@@ -146,6 +146,7 @@ namespace MigraDoc.DocumentObjectModel
         /// <summary>
         /// Gets or sets the name of the font.
         /// </summary>
+        /// <remarks>default is Arial in <see cref="Styles.SetupStyles()"/></remarks>
         public string Name
         {
             get { return _name.Value; }

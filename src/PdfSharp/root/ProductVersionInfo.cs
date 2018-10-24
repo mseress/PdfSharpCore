@@ -90,7 +90,7 @@ namespace PdfSharp
         /// <summary>
         /// The copyright information.
         /// </summary>
-        public const string Copyright = "Copyright © 2005-2017 empira Software GmbH.";
+        public const string Copyright = "Copyright ?2005-2017 empira Software GmbH.";
 
         /// <summary>
         /// The trademark the product.
@@ -234,37 +234,7 @@ namespace PdfSharp
         /// -wp : Windows Phone
         /// -wrt : Windows RunTime
         /// </summary>
-#if GDI && !WPF
-        // GDI+ (System.Drawing)
-        public const string Technology = "-gdi";
-#endif
-#if WPF && !GDI && !SILVERLIGHT
-        // Windows Presentation Foundation
-        public const string Technology = "-wpf";
-#endif
-#if WPF && GDI
-        // Hybrid - for testing only
-        public const string Technology = "-h";
-#endif
-#if SILVERLIGHT && !WINDOWS_PHONE
-        // Silverlight 5
-        public const string Technology = "-sl";
-#endif
-#if WINDOWS_PHONE
-        // Windows Phone
-        public const string Technology = "-wp";
-#endif
-#if NETFX_CORE
-        // WinRT
-        public const string Technology = "-wrt";
-#endif
-#if UWP
-        // Windows Universal App
-        public const string Technology = "-uwp";
-#endif
-#if CORE
         // .net without GDI+ and WPF
         public const string Technology = "";  // no extension
-#endif
     }
 }

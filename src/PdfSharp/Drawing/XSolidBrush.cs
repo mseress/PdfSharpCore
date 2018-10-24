@@ -32,15 +32,6 @@ using System.Diagnostics;
 #if GDI
 using System.Drawing;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-#endif
-#if UWP
-using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.Brushes;
-using UwpBrush = Windows.UI.Xaml.Media.Brush;
-#endif
 
 namespace PdfSharp.Drawing
 {
@@ -89,12 +80,6 @@ namespace PdfSharp.Drawing
 #if GDI
                 _gdiDirty = _gdiDirty || _color != value;
 #endif
-#if WPF
-                _wpfDirty = _wpfDirty || _color != value;
-#endif
-#if GDI && WPF
-                _gdiDirty = _wpfDirty = true;
-#endif
                 _color = value;
             }
         }
@@ -137,41 +122,10 @@ namespace PdfSharp.Drawing
         }
 #endif
 
-#if WPF
-        internal override System.Windows.Media.Brush RealizeWpfBrush()
-        {
-            if (_wpfDirty)
-            {
-                if (_wpfBrush == null)
-                    _wpfBrush = new SolidColorBrush(_color.ToWpfColor());
-                else
-                    _wpfBrush.Color = _color.ToWpfColor();
-                _wpfDirty = false;
-            }
-
-#if DEBUG_
-            System.Windows.Media.Color clr = _color.ToWpfColor();
-            System.Windows.Media.SolidColorBrush brush1 = new System.Windows.Media.SolidColorBrush(clr); //System.Drawing.Color.FromArgb(128, 128, 0, 0));
-            Debug.Assert(_wpfBrush.Color == brush1.Color);  // Crashes during unit testing
-#endif
-            return _wpfBrush;
-        }
-#endif
-
-#if UWP
-        internal override ICanvasBrush RealizeCanvasBrush()
-        {
-            return new CanvasSolidColorBrush(CanvasDevice.GetSharedDevice(), _color.ToUwpColor());
-        }
-#endif
 
 #if GDI
         bool _gdiDirty = true;
         SolidBrush _gdiBrush;
-#endif
-#if WPF
-        bool _wpfDirty = true;
-        SolidColorBrush _wpfBrush;
 #endif
         readonly bool _immutable;
     }

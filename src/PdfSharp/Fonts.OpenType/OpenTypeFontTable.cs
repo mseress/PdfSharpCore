@@ -44,7 +44,7 @@ namespace PdfSharp.Fonts.OpenType
     /// <summary>
     /// Base class for all OpenType tables used in PDFsharp.
     /// </summary>
-    internal class OpenTypeFontTable : ICloneable
+    public class OpenTypeFontTable : ICloneable
     {
         public OpenTypeFontTable(OpenTypeFontface fontData, string tag)
         {

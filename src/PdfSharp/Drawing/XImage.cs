@@ -31,21 +31,11 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using PdfSharp.Pdf;
-#if CORE
 using System.Drawing;
-#endif
 #if GDI
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-#endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-#endif
-#if NETFX_CORE || UWP
-using Windows.UI.Xaml.Media.Imaging;
 #endif
 using PdfSharp.Drawing.Internal;
 using PdfSharp.Internal;
@@ -72,29 +62,12 @@ namespace PdfSharp.Drawing
     /// </summary>
     public class XImage : IDisposable
     {
-        // The hierarchy is adapted to WPF/Silverlight/WinRT
-        //
-        // XImage                           <-- ImageSource
-        //   XForm
-        //   PdfForm
-        //   XBitmapSource               <-- BitmapSource
-        //     XBitmapImage             <-- BitmapImage
-
-        // ???
-        //public bool Disposed
-        //{
-        //    get { return _disposed; }
-        //    set { _disposed = value; }
-        //}
-
-
         /// <summary>
         /// Initializes a new instance of the <see cref="XImage"/> class.
         /// </summary>
         protected XImage()
         { }
 
-#if GDI || CORE || WPF
         /// <summary>
         /// Initializes a new instance of the <see cref="XImage"/> class from an image read by ImageImporter.
         /// </summary>
@@ -108,7 +81,6 @@ namespace PdfSharp.Drawing
             _importedImage = image;
             Initialize();
         }
-#endif
 
 #if GDI
         /// <summary>
@@ -117,68 +89,6 @@ namespace PdfSharp.Drawing
         XImage(Image image)
         {
             _gdiImage = image;
-#if WPF  // Is defined in hybrid build.
-            _wpfImage = ImageHelper.CreateBitmapSource(image);
-#endif
-            Initialize();
-        }
-#endif
-
-#if WPF
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XImage"/> class from a WPF image.
-        /// </summary>
-        XImage(BitmapSource image)
-        {
-            _wpfImage = image;
-            Initialize();
-        }
-#endif
-
-#if WPF
-        XImage(Uri uri)
-        {
-            //var uriSource = new Uri(@"/WpfApplication1;component/Untitled.png", UriKind.Relative); foo.Source = new BitmapImage(uriSource);
-
-            _wpfImage = BitmapFromUri(uri);
-
-            //throw new NotImplementedException("XImage from Uri.");
-            // WPF
-            //Image finalImage = new Image();
-            //finalImage.Width = 80;
-            //...BitmapImage logo = new BitmapImage()
-            //logo.BeginInit();logo.UriSource = new Uri("pack://application:,,,/ApplicationName;component/Resources/logo.png");
-            //logo.EndInit();
-            //...finalImage.Source = logo;
-        }
-
-        /// <summary>
-        /// Creates an BitmapImage from URI. Sets BitmapCacheOption.OnLoad for WPF to prevent image file from being locked.
-        /// </summary>
-        public static BitmapImage BitmapFromUri(Uri uri)
-        {
-#if !SILVERLIGHT
-            // Using new BitmapImage(uri) will leave a lock on the file, leading to problems with temporary image files in server environments.
-            // We use BitmapCacheOption.OnLoad to prevent this lock.
-            BitmapImage bitmap = new BitmapImage();
-            bitmap.BeginInit();
-            bitmap.UriSource = uri;
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.EndInit();
-            return bitmap;
-#else
-            return new BitmapImage(uri);
-#endif
-        }
-#endif
-
-#if NETFX_CORE
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XImage"/> class from a WinRT image.
-        /// </summary>
-        XImage(BitmapSource image)
-        {
-            _wrtImage = image;
             Initialize();
         }
 #endif
@@ -186,12 +96,12 @@ namespace PdfSharp.Drawing
         // Useful stuff here: http://stackoverflow.com/questions/350027/setting-wpf-image-source-in-code
         XImage(string path)
         {
-#if !NETFX_CORE && !UWP
+
             path = Path.GetFullPath(path);
             if (!File.Exists(path))
                 throw new FileNotFoundException(PSSR.FileNotFound(path));
             //throw new FileNotFoundException(PSSR.FileNotFound(path), path);
-#endif
+
             _path = path;
 
             //FileStream file = new FileStream(filename, FileMode.Open);
@@ -199,27 +109,12 @@ namespace PdfSharp.Drawing
             //Bits = new byte[BitsLength];
             //file.Read(Bits, 0, BitsLength);
             //file.Close();
-#if CORE_WITH_GDI || GDI
             try
             {
                 Lock.EnterGdiPlus();
                 _gdiImage = Image.FromFile(path);
             }
             finally { Lock.ExitGdiPlus(); }
-#endif
-#if WPF && !SILVERLIGHT
-            //BitmapSource.Create()
-            // BUG: BitmapImage locks the file
-            //_wpfImage = new BitmapImage(new Uri(path));  // AGHACK
-            // Suggested change from forum to prevent locking.
-            _wpfImage = BitmapFromUri(new Uri(path));
-#endif
-#if WPF && SILVERLIGHT
-            //BitmapSource.Create()
-            // BUG: BitmapImage locks the file
-            //_wpfImage = new BitmapImage(new Uri(path));  // AGHACK
-            //Debug-Break.Break();
-#endif
 
 #if true_
             float vres = image.VerticalResolution;
@@ -241,7 +136,7 @@ namespace PdfSharp.Drawing
 
             // TODO: Create a fingerprint of the bytes in the stream to identify identical images.
             // TODO: Merge code for CORE_WITH_GDI and GDI.
-#if CORE_WITH_GDI
+
             // Create a GDI+ image.
             try
             {
@@ -249,7 +144,7 @@ namespace PdfSharp.Drawing
                 _gdiImage = Image.FromStream(stream);
             }
             finally { Lock.ExitGdiPlus(); }
-#endif
+
 #if GDI
             // Create a GDI+ image.
             try
@@ -258,25 +153,6 @@ namespace PdfSharp.Drawing
                 _gdiImage = Image.FromStream(stream);
             }
             finally { Lock.ExitGdiPlus(); }
-#endif
-#if WPF && !SILVERLIGHT
-            // Create a WPF BitmapImage.
-            BitmapImage bmi = new BitmapImage();
-            bmi.BeginInit();
-            bmi.StreamSource = stream;
-            bmi.EndInit();
-            _wpfImage = bmi;
-#endif
-#if SILVERLIGHT
-            int length = (int)stream.Length;
-            stream.Seek(0, SeekOrigin.Begin);
-            //_bytes = new byte[length];
-            //stream.Read(_bytes, 0, length);
-            //stream.Seek(0, SeekOrigin.Begin);
-
-            // Create a Silverlight BitmapImage.
-            _wpfImage = new BitmapImage();
-            _wpfImage.SetSource(stream);
 #endif
 
 #if true_
@@ -313,17 +189,7 @@ namespace PdfSharp.Drawing
             return new XImage(image);
         }
 #endif
-
-#if WPF
-        /// <summary>
-        /// Conversion from BitmapSource to XImage.
-        /// </summary>
-        public static XImage FromBitmapSource(BitmapSource image)
-        {
-            return new XImage(image);
-        }
-#endif
-
+        
 #if NETFX_CORE
         /// <summary>
         /// Conversion from BitmapSource to XImage.
@@ -361,7 +227,6 @@ namespace PdfSharp.Drawing
         }
 
 #if DEBUG
-#if CORE || GDI || WPF
         /// <summary>
         /// Creates an image from the specified file.
         /// </summary>
@@ -413,10 +278,8 @@ namespace PdfSharp.Drawing
             return image;
         }
 #endif
-#endif
 
 #if DEBUG
-#if CORE || GDI || WPF
         /// <summary>
         /// Creates an image.
         /// </summary>
@@ -429,7 +292,6 @@ namespace PdfSharp.Drawing
 
             return new XImage(image);
         }
-#endif
 #endif
 
         /// <summary>
@@ -460,7 +322,6 @@ namespace PdfSharp.Drawing
 
         internal void Initialize()
         {
-#if CORE || GDI || WPF
             if (_importedImage != null)
             {
                 ImportedImageJpeg iiJpeg = _importedImage as ImportedImageJpeg;
@@ -471,7 +332,6 @@ namespace PdfSharp.Drawing
                     _format = XImageFormat.Png;
                 return;
             }
-#endif
 
 #if CORE_WITH_GDI
             if (_gdiImage != null)
@@ -572,314 +432,8 @@ namespace PdfSharp.Drawing
                 return;
             }
 #endif
-#if WPF
-#if !SILVERLIGHT
-            if (_wpfImage != null)
-            {
-                //string filename = GetImageFilename(_wpfImage);
-                // WPF treats all images as images.
-                // We give JPEG images a special treatment.
-                // Test if it's a JPEG.
-                bool isJpeg = IsJpeg; // TestJpeg(filename);
-                if (isJpeg)
-                {
-                    _format = XImageFormat.Jpeg;
-                    return;
-                }
-
-                string pixelFormat = _wpfImage.Format.ToString();
-                switch (pixelFormat)
-                {
-                    case "Bgr32":
-                    case "Bgra32":
-                    case "Pbgra32":
-                        _format = XImageFormat.Png;
-                        break;
-
-                    //case "{B96B3CAE-0728-11D3-9D7B-0000F81EF32E}":  // jpeg
-                    //  format = XImageFormat.Jpeg;
-                    //  break;
-
-                    //case "{B96B3CB0-0728-11D3-9D7B-0000F81EF32E}":  // gif
-                    case "BlackWhite":
-                    case "Indexed1":
-                    case "Indexed4":
-                    case "Indexed8":
-                    case "Gray8":
-                        _format = XImageFormat.Gif;
-                        break;
-
-                    //case "{B96B3CB1-0728-11D3-9D7B-0000F81EF32E}":  // tiff
-                    //  format = XImageFormat.Tiff;
-                    //  break;
-
-                    //case "{B96B3CB5-0728-11D3-9D7B-0000F81EF32E}":  // icon
-                    //  format = XImageFormat.Icon;
-                    //  break;
-
-                    //case "{B96B3CAC-0728-11D3-9D7B-0000F81EF32E}":  // emf
-                    //case "{B96B3CAD-0728-11D3-9D7B-0000F81EF32E}":  // wmf
-                    //case "{B96B3CB2-0728-11D3-9D7B-0000F81EF32E}":  // exif
-                    //case "{B96B3CB3-0728-11D3-9D7B-0000F81EF32E}":  // photoCD
-                    //case "{B96B3CB4-0728-11D3-9D7B-0000F81EF32E}":  // flashPIX
-
-                    default:
-                        Debug.Assert(false, "Unknown pixel format: " + pixelFormat);
-                        _format = XImageFormat.Gif;
-                        break;// throw new InvalidOperationException("Unsupported image format.");
-                }
-            }
-#else
-            if (_wpfImage != null)
-            {
-                // TODO improve implementation for Silverlight.
-
-                //string pixelFormat = "jpg"; //_wpfImage...Format.ToString();
-                //string filename = GetImageFilename(_wpfImage);
-                // WPF treats all images as images.
-                // We give JPEG images a special treatment.
-                // Test if it's a JPEG:
-                bool isJpeg = true; // IsJpeg; // TestJpeg(filename);
-                if (isJpeg)
-                {
-                    _format = XImageFormat.Jpeg;
-                    return;
-                }
-
-                /*
-                switch (pixelFormat)
-                {
-                    case "Bgr32":
-                    case "Bgra32":
-                    case "Pbgra32":
-                        _format = XImageFormat.Png;
-                        break;
-
-                    //case "{B96B3CAE-0728-11D3-9D7B-0000F81EF32E}":  // jpeg
-                    //  format = XImageFormat.Jpeg;
-                    //  break;
-
-                    //case "{B96B3CB0-0728-11D3-9D7B-0000F81EF32E}":  // gif
-                    case "BlackWhite":
-                    case "Indexed1":
-                    case "Indexed4":
-                    case "Indexed8":
-                    case "Gray8":
-                        _format = XImageFormat.Gif;
-                        break;
-
-                    //case "{B96B3CB1-0728-11D3-9D7B-0000F81EF32E}":  // tiff
-                    //  format = XImageFormat.Tiff;
-                    //  break;
-
-                    //case "{B96B3CB5-0728-11D3-9D7B-0000F81EF32E}":  // icon
-                    //  format = XImageFormat.Icon;
-                    //  break;
-
-                    //case "{B96B3CAC-0728-11D3-9D7B-0000F81EF32E}":  // emf
-                    //case "{B96B3CAD-0728-11D3-9D7B-0000F81EF32E}":  // wmf
-                    //case "{B96B3CB2-0728-11D3-9D7B-0000F81EF32E}":  // exif
-                    //case "{B96B3CB3-0728-11D3-9D7B-0000F81EF32E}":  // photoCD
-                    //case "{B96B3CB4-0728-11D3-9D7B-0000F81EF32E}":  // flashPIX
-
-                    default:
-                        Debug.Assert(false, "Unknown pixel format: " + pixelFormat);
-                        _format = XImageFormat.Gif;
-                        break;// throw new InvalidOperationException("Unsupported image format.");
-                }
-                 */
-            }
-#endif
-#endif
         }
-
-#if WPF
-        /// <summary>
-        /// Gets the image filename.
-        /// </summary>
-        /// <param name="bitmapSource">The bitmap source.</param>
-        internal static string GetImageFilename(BitmapSource bitmapSource)
-        {
-            string filename = bitmapSource.ToString();
-            filename = UrlDecodeStringFromStringInternal(filename);
-            if (filename.StartsWith("file:///"))
-                filename = filename.Substring(8); // Remove all 3 slashes!
-            else if (filename.StartsWith("file://"))
-                filename = filename.Substring(5); // Keep 2 slashes (UNC path)
-            return filename;
-        }
-
-        private static string UrlDecodeStringFromStringInternal(string s/*, Encoding e*/)
-        {
-            int length = s.Length;
-            string result = "";
-            for (int i = 0; i < length; i++)
-            {
-                char ch = s[i];
-                if (ch == '+')
-                {
-                    ch = ' ';
-                }
-                else if ((ch == '%') && (i < (length - 2)))
-                {
-                    if ((s[i + 1] == 'u') && (i < (length - 5)))
-                    {
-                        int num3 = HexToInt(s[i + 2]);
-                        int num4 = HexToInt(s[i + 3]);
-                        int num5 = HexToInt(s[i + 4]);
-                        int num6 = HexToInt(s[i + 5]);
-                        if (((num3 < 0) || (num4 < 0)) || ((num5 < 0) || (num6 < 0)))
-                        {
-                            goto AddByte;
-                        }
-                        ch = (char)((((num3 << 12) | (num4 << 8)) | (num5 << 4)) | num6);
-                        i += 5;
-                        result += ch;
-                        continue;
-                    }
-                    int num7 = HexToInt(s[i + 1]);
-                    int num8 = HexToInt(s[i + 2]);
-                    if ((num7 >= 0) && (num8 >= 0))
-                    {
-                        byte b = (byte)((num7 << 4) | num8);
-                        i += 2;
-                        result += (char)b;
-                        continue;
-                    }
-                }
-            AddByte:
-                if ((ch & 0xff80) == 0)
-                {
-                    result += ch;
-                }
-                else
-                {
-                    result += ch;
-                }
-            }
-            return result;
-        }
-
-        private static int HexToInt(char h)
-        {
-            if (h >= '0' && h <= '9')
-                return (h - '0');
-            if (h >= 'a' && h <= 'f')
-                return ((h - 'a') + 10);
-            if (h >= 'A' && h <= 'F')
-                return (h - 'A') + 10;
-            return -1;
-        }
-#endif
-
-#if WPF
-        /// <summary>
-        /// Tests if a file is a JPEG.
-        /// </summary>
-        /// <param name="filename">The filename.</param>
-        internal static bool TestJpeg(string filename)
-        {
-            byte[] imageBits = null;
-            return ReadJpegFile(filename, 16, ref imageBits);
-        }
-
-        /// <summary>
-        /// Tests if a file is a JPEG.
-        /// </summary>
-        /// <param name="stream">The filename.</param>
-        internal static bool TestJpeg(Stream stream)
-        {
-            byte[] imageBits = null;
-            return ReadJpegFile(stream, 16, ref imageBits) == true;
-        }
-
-        /// <summary>
-        /// Reads the JPEG file.
-        /// </summary>
-        /// <param name="filename">The filename.</param>
-        /// <param name="maxRead">The maximum count of bytes to be read.</param>
-        /// <param name="imageBits">The bytes read from the file.</param>
-        /// <returns>False, if file could not be read or is not a JPEG file.</returns>
-        internal static bool ReadJpegFile(string filename, int maxRead, ref byte[] imageBits)
-        {
-            if (File.Exists(filename))
-            {
-                FileStream fs = null;
-                try
-                {
-                    fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                }
-                catch
-                {
-                    return false;
-                }
-
-                bool? test = ReadJpegFile(fs, maxRead, ref imageBits);
-                // Treat test result as definite.
-                if (test == false || test == true)
-                {
-                    fs.Close();
-                    return test.Value;
-                }
-                // Test result is maybe.
-                // Hack: store the file in PDF if extension matches ...
-                string str = filename.ToLower();
-                if (str.EndsWith(".jpg") || str.EndsWith(".jpeg"))
-                    return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Reads the JPEG file.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="maxRead">The maximum count of bytes to be read.</param>
-        /// <param name="imageBits">The bytes read from the file.</param>
-        /// <returns>False, if file could not be read or is not a JPEG file.</returns>
-        internal static bool? ReadJpegFile(Stream stream, int maxRead, ref byte[] imageBits)
-        {
-            if (!stream.CanSeek)
-                return false;
-            stream.Seek(0, SeekOrigin.Begin);
-
-            if (stream.Length < 16)
-            {
-                return false;
-            }
-            int len = maxRead == -1 ? (int)stream.Length : maxRead;
-            imageBits = new byte[len];
-            stream.Read(imageBits, 0, len);
-            if (imageBits[0] == 0xff &&
-                imageBits[1] == 0xd8 &&
-                imageBits[2] == 0xff &&
-                imageBits[3] == 0xe0 &&
-                imageBits[6] == 0x4a &&
-                imageBits[7] == 0x46 &&
-                imageBits[8] == 0x49 &&
-                imageBits[9] == 0x46 &&
-                imageBits[10] == 0x0)
-            {
-                return true;
-            }
-            // TODO: Exif: find JFIF header
-            if (imageBits[0] == 0xff &&
-                imageBits[1] == 0xd8 &&
-                imageBits[2] == 0xff &&
-                imageBits[3] == 0xe1 /*&&
-                        imageBits[6] == 0x4a &&
-                        imageBits[7] == 0x46 &&
-                        imageBits[8] == 0x49 &&
-                        imageBits[9] == 0x46 &&
-                        imageBits[10] == 0x0*/)
-            {
-                // Hack: store the file in PDF if extension matches ...
-                return null;
-            }
-            return false;
-        }
-#endif
-
+        
         /// <summary>
         /// Under construction
         /// </summary>
@@ -897,14 +451,11 @@ namespace PdfSharp.Drawing
             if (!_disposed)
                 _disposed = true;
 
-#if CORE || GDI || WPF
             //if (_importedImage != null)
             {
                 _importedImage = null;
             }
-#endif
 
-#if CORE_WITH_GDI || GDI
             if (_gdiImage != null)
             {
                 try
@@ -915,96 +466,9 @@ namespace PdfSharp.Drawing
                 }
                 finally { Lock.ExitGdiPlus(); }
             }
-#endif
-#if WPF
-            _wpfImage = null;
-#endif
         }
         bool _disposed;
-
-        /// <summary>
-        /// Gets the width of the image.
-        /// </summary>
-        [Obsolete("Use either PixelWidth or PointWidth. Temporarily obsolete because of rearrangements for WPF. Currently same as PixelWidth, but will become PointWidth in future releases of PDFsharp.")]
-        public virtual double Width
-        {
-            get
-            {
-#if CORE || GDI || WPF
-                if (_importedImage != null)
-                {
-                    return _importedImage.Information.Width;
-                }
-#endif
-
-#if (CORE_WITH_GDI || GDI)  && !WPF
-                try
-                {
-                    Lock.EnterGdiPlus();
-                    return _gdiImage.Width;
-                }
-                finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                double gdiWidth = _gdiImage.Width;
-                double wpfWidth = _wpfImage.PixelWidth;
-                Debug.Assert(gdiWidth == wpfWidth);
-                return wpfWidth;
-#endif
-                //#if GDI && !WPF
-                //                return _gdiImage.Width;
-                //#endif
-#if WPF && !GDI
-                return _wpfImage.PixelWidth;
-#endif
-#if NETFX_CORE || UWP
-                return 100;
-#endif
-            }
-        }
-
-        /// <summary>
-        /// Gets the height of the image.
-        /// </summary>
-        [Obsolete("Use either PixelHeight or PointHeight. Temporarily obsolete because of rearrangements for WPF. Currently same as PixelHeight, but will become PointHeight in future releases of PDFsharp.")]
-        public virtual double Height
-        {
-            get
-            {
-#if CORE_WITH_GDI || GDI || WPF
-                if (_importedImage != null)
-                {
-                    return _importedImage.Information.Height;
-                }
-#endif
-
-#if (CORE_WITH_GDI || GDI) && !WPF && !WPF
-                try
-                {
-                    Lock.EnterGdiPlus();
-                    return _gdiImage.Height;
-                }
-                finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                double gdiHeight = _gdiImage.Height;
-                double wpfHeight = _wpfImage.PixelHeight;
-                Debug.Assert(gdiHeight == wpfHeight);
-                return wpfHeight;
-#endif
-                //#if GDI && !WPF
-                //                return _gdiImage.Height;
-                //#endif
-#if WPF && !GDI
-                return _wpfImage.PixelHeight;
-#endif
-#if NETFX_CORE || UWP
-                return _wrtImage.PixelHeight;
-#endif
-            }
-        }
-
-#if CORE || GDI || WPF
+               
         /// <summary>
         /// The factor for conversion from DPM to PointWidth or PointHeight.
         /// 72 points per inch, 1000 mm per meter, 25.4 mm per inch => 72 * 1000 / 25.4.
@@ -1016,7 +480,6 @@ namespace PdfSharp.Drawing
         /// 1000 mm per meter, 25.4 mm per inch => 1000 / 25.4.
         /// </summary>
         private const decimal FactorDPM = 1000 / 25.4m;
-#endif
 
         /// <summary>
         /// Gets the width of the image in point.
@@ -1025,7 +488,6 @@ namespace PdfSharp.Drawing
         {
             get
             {
-#if CORE || GDI || WPF
                 if (_importedImage != null)
                 {
                     if (_importedImage.Information.HorizontalDPM > 0)
@@ -1035,40 +497,13 @@ namespace PdfSharp.Drawing
                     // Assume 72 DPI if information not available.
                     return _importedImage.Information.Width;
                 }
-#endif
 
-#if (CORE_WITH_GDI || GDI) && !WPF
                 try
                 {
                     Lock.EnterGdiPlus();
                     return _gdiImage.Width * 72 / _gdiImage.HorizontalResolution;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                double gdiWidth = _gdiImage.Width * 72 / _gdiImage.HorizontalResolution;
-                double wpfWidth = _wpfImage.Width * 72.0 / 96.0;
-                //Debug.Assert(gdiWidth == wpfWidth);
-                Debug.Assert(DoubleUtil.AreRoughlyEqual(gdiWidth, wpfWidth, 5));
-                return wpfWidth;
-#endif
-                //#if GDI && !WPF
-                //                return _gdiImage.Width * 72 / _gdiImage.HorizontalResolution;
-                //#endif
-#if WPF && !GDI
-#if !SILVERLIGHT
-                Debug.Assert(Math.Abs(_wpfImage.PixelWidth * 72 / _wpfImage.DpiX - _wpfImage.Width * 72.0 / 96.0) < 0.001);
-                return _wpfImage.Width * 72.0 / 96.0;
-#else
-                // AGHACK
-                return _wpfImage.PixelWidth * 72 / 96.0;
-#endif
-#endif
-#if NETFX_CORE || UWP
-                //var wb = new WriteableBitmap();
-                //GetImagePropertiesAsync
-                return 100;
-#endif
             }
         }
 
@@ -1079,7 +514,6 @@ namespace PdfSharp.Drawing
         {
             get
             {
-#if CORE || GDI || WPF
                 if (_importedImage != null)
                 {
                     if (_importedImage.Information.VerticalDPM > 0)
@@ -1089,37 +523,13 @@ namespace PdfSharp.Drawing
                     // Assume 72 DPI if information not available.
                     return _importedImage.Information.Width;
                 }
-#endif
 
-#if (CORE_WITH_GDI || GDI) && !WPF
                 try
                 {
                     Lock.EnterGdiPlus();
                     return _gdiImage.Height * 72 / _gdiImage.HorizontalResolution;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                double gdiHeight = _gdiImage.Height * 72 / _gdiImage.HorizontalResolution;
-                double wpfHeight = _wpfImage.Height * 72.0 / 96.0;
-                Debug.Assert(DoubleUtil.AreRoughlyEqual(gdiHeight, wpfHeight, 5));
-                return wpfHeight;
-#endif
-                //#if GDI && !WPF
-                //                return _gdiImage.Height * 72 / _gdiImage.HorizontalResolution;
-                //#endif
-#if WPF && !GDI
-#if !SILVERLIGHT
-                Debug.Assert(Math.Abs(_wpfImage.PixelHeight * 72 / _wpfImage.DpiY - _wpfImage.Height * 72.0 / 96.0) < 0.001);
-                return _wpfImage.Height * 72.0 / 96.0;
-#else
-                // AGHACK
-                return _wpfImage.PixelHeight * 72 / 96.0;
-#endif
-#endif
-#if NETFX_CORE || UWP
-                return _wrtImage.PixelHeight; //_gdi Image.Width * 72 / _gdiImage.HorizontalResolution;
-#endif
             }
         }
 
@@ -1130,19 +540,15 @@ namespace PdfSharp.Drawing
         {
             get
             {
-#if CORE || GDI || WPF
                 if (_importedImage != null)
                     return (int)_importedImage.Information.Width;
-#endif
 
-#if CORE_WITH_GDI
                 try
                 {
                     Lock.EnterGdiPlus();
                     return _gdiImage.Width;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
 #if GDI && !WPF
                 try
                 {
@@ -1150,21 +556,6 @@ namespace PdfSharp.Drawing
                     return _gdiImage.Width;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                int gdiWidth = _gdiImage.Width;
-                int wpfWidth = _wpfImage.PixelWidth;
-                Debug.Assert(gdiWidth == wpfWidth);
-                return wpfWidth;
-#endif
-                //#if GDI && !WPF
-                //                return _gdiImage.Width;
-                //#endif
-#if WPF && !GDI
-                return _wpfImage.PixelWidth;
-#endif
-#if NETFX_CORE || UWP
-                return _wrtImage.PixelWidth;
 #endif
             }
         }
@@ -1176,19 +567,16 @@ namespace PdfSharp.Drawing
         {
             get
             {
-#if CORE || GDI || WPF
                 if (_importedImage != null)
                     return (int)_importedImage.Information.Height;
-#endif
 
-#if CORE_WITH_GDI
                 try
                 {
                     Lock.EnterGdiPlus();
                     return _gdiImage.Height;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
+
 #if GDI && !WPF
                 try
                 {
@@ -1196,21 +584,6 @@ namespace PdfSharp.Drawing
                     return _gdiImage.Height;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                int gdiHeight = _gdiImage.Height;
-                int wpfHeight = _wpfImage.PixelHeight;
-                Debug.Assert(gdiHeight == wpfHeight);
-                return wpfHeight;
-#endif
-                //#if GDI && !WPF
-                //                return _gdiImage.Height;
-                //#endif
-#if WPF && !GDI
-                return _wpfImage.PixelHeight;
-#endif
-#if NETFX_CORE || UWP
-                return _wrtImage.PixelHeight;
 #endif
             }
         }
@@ -1230,7 +603,6 @@ namespace PdfSharp.Drawing
         {
             get
             {
-#if CORE || GDI || WPF
                 if (_importedImage != null)
                 {
                     if (_importedImage.Information.HorizontalDPI > 0)
@@ -1239,36 +611,13 @@ namespace PdfSharp.Drawing
                         return (double)(_importedImage.Information.HorizontalDPM / FactorDPM);
                     return 72;
                 }
-#endif
 
-#if (CORE_WITH_GDI || GDI) && !WPF
                 try
                 {
                     Lock.EnterGdiPlus();
                     return _gdiImage.HorizontalResolution;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                double gdiResolution = _gdiImage.HorizontalResolution;
-                double wpfResolution = _wpfImage.PixelWidth * 96.0 / _wpfImage.Width;
-                Debug.Assert(gdiResolution == wpfResolution);
-                return wpfResolution;
-#endif
-                //#if GDI && !WPF
-                //                return _gdiImage.HorizontalResolution;
-                //#endif
-#if WPF && !GDI
-#if !SILVERLIGHT
-                return _wpfImage.DpiX; //.PixelWidth * 96.0 / _wpfImage.Width;
-#else
-                // AGHACK
-                return 96;
-#endif
-#endif
-#if NETFX_CORE || UWP
-                return 96;
-#endif
             }
         }
 
@@ -1279,7 +628,6 @@ namespace PdfSharp.Drawing
         {
             get
             {
-#if CORE || GDI || WPF
                 if (_importedImage != null)
                 {
                     if (_importedImage.Information.VerticalDPI > 0)
@@ -1288,36 +636,13 @@ namespace PdfSharp.Drawing
                         return (double)(_importedImage.Information.VerticalDPM / FactorDPM);
                     return 72;
                 }
-#endif
 
-#if (CORE_WITH_GDI || GDI) && !WPF
                 try
                 {
                     Lock.EnterGdiPlus();
                     return _gdiImage.VerticalResolution;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                double gdiResolution = _gdiImage.VerticalResolution;
-                double wpfResolution = _wpfImage.PixelHeight * 96.0 / _wpfImage.Height;
-                Debug.Assert(gdiResolution == wpfResolution);
-                return wpfResolution;
-#endif
-                //#if GDI && !WPF
-                //                return _gdiImage.VerticalResolution;
-                //#endif
-#if WPF && !GDI
-#if !SILVERLIGHT
-                return _wpfImage.DpiY; //.PixelHeight * 96.0 / _wpfImage.Height;
-#else
-                // AGHACK
-                return 96;
-#endif
-#endif
-#if NETFX_CORE || UWP
-                return 96;
-#endif
             }
         }
 
@@ -1339,141 +664,7 @@ namespace PdfSharp.Drawing
             get { return _format; }
         }
         XImageFormat _format;
-
-#if WPF
-        /// <summary>
-        /// Gets a value indicating whether this image is JPEG.
-        /// </summary>
-        internal virtual bool IsJpeg
-        {
-#if !SILVERLIGHT
-            //get { if (!isJpeg.HasValue) InitializeGdiHelper(); return isJpeg.HasValue ? isJpeg.Value : false; }
-            get
-            {
-                if (!_isJpeg.HasValue)
-                    InitializeJpegQuickTest();
-                return _isJpeg.HasValue ? _isJpeg.Value : false;
-            }
-            //set { isJpeg = value; }
-#else
-            // AGHACK
-            get { return true; }
-#endif
-        }
-        private bool? _isJpeg;
-
-        /// <summary>
-        /// Gets a value indicating whether this image is cmyk.
-        /// </summary>
-        internal virtual bool IsCmyk
-        {
-#if !SILVERLIGHT
-            get { if (!_isCmyk.HasValue) InitializeGdiHelper(); return _isCmyk.HasValue ? _isCmyk.Value : false; }
-            //set { isCmyk = value; }
-#else
-            get { return false; } // AGHACK
-#endif
-        }
-        private bool? _isCmyk;
-
-#if !SILVERLIGHT
-        /// <summary>
-        /// Gets the JPEG memory stream (if IsJpeg returns true).
-        /// </summary>
-        public virtual MemoryStream Memory
-        {
-            get
-            {
-                if (!_isCmyk.HasValue) InitializeGdiHelper();
-                return _memory;
-            }
-            //set { memory = value; }
-        }
-        MemoryStream _memory;
-
-        /// <summary>
-        /// Determines if an image is JPEG w/o creating an Image object.
-        /// </summary>
-        private void InitializeJpegQuickTest()
-        {
-            if (_stream != null)
-                _isJpeg = TestJpeg(_stream);
-            else
-                _isJpeg = TestJpeg(GetImageFilename(_wpfImage));
-        }
-
-        /// <summary>
-        /// Initializes the GDI helper.
-        /// We use GDI+ to detect if image is JPEG.
-        /// If so, we also determine if it's CMYK and we read the image bytes.
-        /// </summary>
-        private void InitializeGdiHelper()
-        {
-            if (!_isCmyk.HasValue)
-            {
-                try
-                {
-                    string imageFilename = GetImageFilename(_wpfImage);
-                    // To reduce exceptions, check if file exists.
-                    if (!string.IsNullOrEmpty(imageFilename) && File.Exists(imageFilename))
-                    {
-                        MemoryStream memory = new MemoryStream();
-                        using (FileStream file = new FileStream(imageFilename, FileMode.Open, FileAccess.Read, FileShare.Read))
-                        {
-                            byte[] bytes = new byte[file.Length];
-                            file.Read(bytes, 0, (int)file.Length);
-                            memory.Write(bytes, 0, (int)file.Length);
-                            memory.Seek(0, SeekOrigin.Begin);
-                        }
-                        InitializeJpegHelper(memory);
-                    }
-                    else if (_stream != null)
-                    {
-                        MemoryStream memory = new MemoryStream();
-                        // If we have a stream, copy data from the stream.
-                        if (_stream != null && _stream.CanSeek)
-                        {
-                            _stream.Seek(0, SeekOrigin.Begin);
-                            byte[] buffer = new byte[32 * 1024]; // 32K buffer.
-                            int bytesRead;
-                            while ((bytesRead = _stream.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                memory.Write(buffer, 0, bytesRead);
-                            }
-                            InitializeJpegHelper(memory);
-                        }
-                    }
-                }
-                catch { }
-            }
-        }
-
-        private void InitializeJpegHelper(MemoryStream memory)
-        {
-            using (System.Drawing.Image image = new System.Drawing.Bitmap(memory))
-            {
-                string guid = image.RawFormat.Guid.ToString("B").ToUpper();
-                _isJpeg = guid == "{B96B3CAE-0728-11D3-9D7B-0000F81EF32E}";
-                _isCmyk = (image.Flags &
-                           ((int)System.Drawing.Imaging.ImageFlags.ColorSpaceCmyk | (int)System.Drawing.Imaging.ImageFlags.ColorSpaceYcck)) != 0;
-                if (_isJpeg.Value)
-                {
-                    //_memory = new MemoryStream();
-                    //image.Save(_memory, System.Drawing.Imaging.ImageFormat.Jpeg);
-                    if ((int)memory.Length != 0)
-                    {
-                        _memory = memory;
-                    }
-                    else
-                    {
-                        _memory = null;
-                    }
-                }
-            }
-        }
-#endif
-#endif
-
+        
 #if DEBUG_
         // TEST
         internal void CreateAllImages(string name)
@@ -1524,19 +715,10 @@ namespace PdfSharp.Drawing
         }
         XGraphics _associatedGraphics;
 
-#if CORE || GDI || WPF
         internal ImportedImage _importedImage;
-#endif
 
-#if CORE_WITH_GDI || GDI
         internal Image _gdiImage;
-#endif
-#if WPF
-        internal BitmapSource _wpfImage;
-#if SILVERLIGHT
-        //internal byte[] _bytes;
-#endif
-#endif
+
 #if NETFX_CORE  || UWP
         internal BitmapSource _wrtImage;
 #endif

@@ -28,13 +28,8 @@
 #endregion
 
 using System;
-#if GDI
 using System.Drawing;
 using System.Drawing.Drawing2D;
-#endif
-#if WPF
-using System.Windows.Media;
-#endif
 using PdfSharp.Pdf;
 
 namespace PdfSharp.Drawing
@@ -62,16 +57,7 @@ namespace PdfSharp.Drawing
         {
             _fontEncoding = encoding;
         }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XPdfFontOptions"/> class.
-        /// </summary>
-        [Obsolete("Must not specify an embedding option anymore.")]
-        public XPdfFontOptions(PdfFontEmbedding embedding)
-        {
-            _fontEncoding = PdfFontEncoding.WinAnsi;
-        }
-
+        
         /// <summary>
         /// Gets a value indicating the font embedding.
         /// </summary>

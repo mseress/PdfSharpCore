@@ -31,11 +31,6 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Media;
-#endif
 
 namespace PdfSharp.Drawing
 {

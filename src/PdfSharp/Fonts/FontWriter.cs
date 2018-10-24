@@ -34,7 +34,7 @@ namespace PdfSharp.Fonts
     /// <summary>
     /// Represents a writer for generation of font file streams. 
     /// </summary>
-    internal class FontWriter
+    public class FontWriter
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="FontWriter"/> class.

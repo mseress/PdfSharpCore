@@ -31,9 +31,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 #endif
-#if WPF
-using System.Windows.Media;
-#endif
 
 namespace PdfSharp.Pdf.Advanced
 {

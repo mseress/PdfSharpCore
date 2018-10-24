@@ -31,15 +31,9 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-#endif
 using PdfSharp.Pdf.Internal;
 using PdfSharp.Fonts;
-#if !EDF_CORE
 using PdfSharp.Drawing;
-#endif
 
 #pragma warning disable 0649
 

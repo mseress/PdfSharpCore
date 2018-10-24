@@ -31,26 +31,9 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using PdfSharp.Internal;
-#if CORE
-#endif
-#if CORE_WITH_GDI
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-#endif
-#if GDI
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-#endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-#endif
-#if NETFX_CORE
-using Windows.UI.Xaml.Media.Imaging;
-#endif
 
 namespace PdfSharp.Drawing
 {
@@ -101,7 +84,6 @@ namespace PdfSharp.Drawing
         {
             if (Source == null)
                 throw new InvalidOperationException("No image source.");
-#if CORE_WITH_GDI || GDI
             if (Source.AssociatedGraphics != null)
             {
                 Source.DisassociateWithGraphics();
@@ -113,10 +95,6 @@ namespace PdfSharp.Drawing
                 Source._gdiImage.Save(stream, ImageFormat.Png);
             }
             finally { Lock.ExitGdiPlus(); }
-#endif
-#if WPF
-            DiagnosticsHelper.ThrowNotImplementedException("Save...");
-#endif
         }
     }
 }

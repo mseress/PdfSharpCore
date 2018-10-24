@@ -34,14 +34,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using GdiPen = System.Drawing.Pen;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-using WpfPen =System.Windows.Media.Pen;
-using WpfBrush =System.Windows.Media.Brush;
-#endif
-#if UWP
-#endif
 
 namespace PdfSharp.Drawing
 {
@@ -331,74 +323,11 @@ namespace PdfSharp.Drawing
         }
 #endif
 
-#if WPF
-        internal WpfPen RealizeWpfPen()
-        {
-#if !SILVERLIGHT
-            if (_dirty || !_dirty) // TODOWPF: XPen is frozen by design, WPF Pen can change
-            {
-                //if (_wpfPen == null)
-                _wpfPen = new WpfPen(new SolidColorBrush(_color.ToWpfColor()), _width);
-                //else
-                //{
-                //  _wpfPen.Brush = new SolidColorBrush(_color.ToWpfColor());
-                //  _wpfPen.Thickness = _width;
-                //}
-                PenLineCap lineCap = XConvert.ToPenLineCap(_lineCap);
-                _wpfPen.StartLineCap = lineCap;
-                _wpfPen.EndLineCap = lineCap;
-                _wpfPen.LineJoin = XConvert.ToPenLineJoin(_lineJoin);
-                if (_dashStyle == XDashStyle.Custom)
-                {
-                    // TODOWPF: does not work in all cases
-                    _wpfPen.DashStyle = new System.Windows.Media.DashStyle(_dashPattern, _dashOffset);
-                }
-                else
-                {
-                    switch (_dashStyle)
-                    {
-                        case XDashStyle.Solid:
-                            _wpfPen.DashStyle = DashStyles.Solid;
-                            break;
-
-                        case XDashStyle.Dash:
-                            //_wpfPen.DashStyle = DashStyles.Dash;
-                            _wpfPen.DashStyle = new System.Windows.Media.DashStyle(new double[] { 2, 2 }, 0);
-                            break;
-
-                        case XDashStyle.Dot:
-                            //_wpfPen.DashStyle = DashStyles.Dot;
-                            _wpfPen.DashStyle = new System.Windows.Media.DashStyle(new double[] { 0, 2 }, 1.5);
-                            break;
-
-                        case XDashStyle.DashDot:
-                            //_wpfPen.DashStyle = DashStyles.DashDot;
-                            _wpfPen.DashStyle = new System.Windows.Media.DashStyle(new double[] { 2, 2, 0, 2 }, 0);
-                            break;
-
-                        case XDashStyle.DashDotDot:
-                            //_wpfPen.DashStyle = DashStyles.DashDotDot;
-                            _wpfPen.DashStyle = new System.Windows.Media.DashStyle(new double[] { 2, 2, 0, 2, 0, 2 }, 0);
-                            break;
-                    }
-                }
-            }
-#else
-      _wpfPen = new System.Windows.Media.Pen();
-      _wpfPen.Brush = new SolidColorBrush(_color.ToWpfColor());
-      _wpfPen.Thickness = _width;
-#endif
-            return _wpfPen;
-        }
-#endif
 
         bool _dirty = true;
         readonly bool _immutable;
 #if GDI
         GdiPen _gdiPen;
-#endif
-#if WPF
-        WpfPen _wpfPen;
 #endif
     }
 }

@@ -35,7 +35,7 @@ namespace PdfSharp.Fonts.OpenType
     /// <summary>
     /// Represents a writer for True Type font files. 
     /// </summary>
-    internal class OpenTypeFontWriter : FontWriter
+    public class OpenTypeFontWriter : FontWriter
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="OpenTypeFontWriter"/> class.

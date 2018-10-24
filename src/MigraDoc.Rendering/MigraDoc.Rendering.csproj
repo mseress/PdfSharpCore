@@ -46,17 +46,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Rendering.Forms\**" />
-    <Compile Remove="Rendering.Windows\**" />
     <EmbeddedResource Remove="Rendering.Forms\**" />
-    <EmbeddedResource Remove="Rendering.Windows\**" />
     <None Remove="Rendering.Forms\**" />
-    <None Remove="Rendering.Windows\**" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Rendering.Printing\MigraDocPrintDocument.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Rendering.Windows\enums\Zoom.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Rendering.Resources\Messages.de.restext" />

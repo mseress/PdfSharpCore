@@ -47,8 +47,8 @@ namespace MigraDoc.Rendering
         /// Initializes a new instance of the PdfDocumentRenderer class.
         /// </summary>
         public PdfDocumentRenderer()
+            : this(true)
         {
-            //_unicode = true;
         }
 
         /// <summary>
@@ -57,39 +57,19 @@ namespace MigraDoc.Rendering
         /// <param name="unicode">If true Unicode encoding is used for all text. If false, WinAnsi encoding is used.</param>
         public PdfDocumentRenderer(bool unicode)
         {
-            _unicode = unicode;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PdfDocumentRenderer" /> class.
-        /// </summary>
-        /// <param name="unicode">If true Unicode encoding is used for all text. If false, WinAnsi encoding is used.</param>
-        /// <param name="fontEmbedding">Obsolete parameter.</param>
-        [Obsolete("Must not specify an embedding option anymore.")]
-        public PdfDocumentRenderer(bool unicode, PdfFontEmbedding fontEmbedding)
-        {
-            _unicode = unicode;
+            Unicode = unicode;
         }
 
         /// <summary>
         /// Gets a value indicating whether the text is rendered as Unicode.
         /// </summary>
-        public bool Unicode
-        {
-            get { return _unicode; }
-        }
-        readonly bool _unicode;
+        public bool Unicode { get; }
 
         /// <summary>
         /// Gets or sets the language.
         /// </summary>
         /// <value>The language.</value>
-        public string Language
-        {
-            get { return _language; }
-            set { _language = value; }
-        }
-        string _language = String.Empty;
+        public string Language { get; set; }
 
         /// <summary>
         /// Set the MigraDoc document to be rendered by this printer.
@@ -132,11 +112,7 @@ namespace MigraDoc.Rendering
         void PrepareDocumentRenderer(bool prepareCompletely)
         {
             if (_document == null)
-#if !NETFX_CORE
                 throw new InvalidOperationException(Messages2.PropertyNotSetBefore("DocumentRenderer", MethodBase.GetCurrentMethod().Name));
-#else
-                throw new InvalidOperationException(Messages2.PropertyNotSetBefore("DocumentRenderer", "PrepareDocumentRenderer"));
-#endif
 
             if (_documentRenderer == null)
             {
@@ -253,7 +229,7 @@ namespace MigraDoc.Rendering
 
                 using (XGraphics gfx = XGraphics.FromPdfPage(pdfPage))
                 {
-                    gfx.MUH = _unicode ? PdfFontEncoding.Unicode : PdfFontEncoding.WinAnsi;
+                    gfx.MUH = Unicode ? PdfFontEncoding.Unicode : PdfFontEncoding.WinAnsi;
                     _documentRenderer.RenderPage(gfx, pageNr);
                 }
             }
@@ -311,8 +287,8 @@ namespace MigraDoc.Rendering
         {
             PdfDocument document = new PdfDocument();
             document.Info.Creator = VersionInfo.Creator;
-            if (!String.IsNullOrEmpty(_language))
-                document.Language = _language;
+            if (!String.IsNullOrEmpty(Language))
+                document.Language = Language;
             return document;
         }
     }

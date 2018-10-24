@@ -28,12 +28,7 @@
 #endregion
 
 using System;
-#if GDI
 using System.Drawing;
-#endif
-#if WPF
-using System.Windows;
-#endif
 
 #pragma warning disable 649
 

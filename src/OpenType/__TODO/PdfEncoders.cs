@@ -1,8 +1,6 @@
 ﻿
 namespace PdfSharp.Pdf.Internal
 {
-
-
     internal class PdfEncoders
     {
         static System.Text.Encoding _unicodeEncoding;

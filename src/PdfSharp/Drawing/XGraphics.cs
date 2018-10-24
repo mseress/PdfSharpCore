@@ -43,37 +43,6 @@ using GdiSizeF = System.Drawing.SizeF;
 using GdiRectF = System.Drawing.RectangleF;
 using GdiMatrix = System.Drawing.Drawing2D.Matrix;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using PdfSharp.Windows;
-using SysPoint = System.Windows.Point;
-using SysSize = System.Windows.Size;
-using SysRect = System.Windows.Rect;
-using SysMatrix = System.Windows.Media.Matrix;
-using WpfBrush = System.Windows.Media.Brush;
-using WpfPen = System.Windows.Media.Pen;
-#if !SILVERLIGHT
-using WpfBrushes = System.Windows.Media.Brushes;
-#endif
-#endif
-#if NETFX_CORE
-using Windows.UI.Xaml.Media;
-using SysPoint = Windows.Foundation.Point;
-using SysSize = Windows.Foundation.Size;
-using SysRect = Windows.Foundation.Rect;
-#endif
-#if UWP
-using System.Numerics;
-using Windows.UI;
-using Windows.UI.Xaml.Controls;
-using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.Geometry;
-using SysPoint = Windows.Foundation.Point;
-using SysSize = Windows.Foundation.Size;
-using SysRect = Windows.Foundation.Rect;
-#endif
 using PdfSharp.Pdf;
 using PdfSharp.Drawing.Pdf;
 using PdfSharp.Internal;
@@ -164,184 +133,6 @@ namespace PdfSharp.Drawing  // #??? Clean up
         }
 #endif
 
-#if WPF && !SILVERLIGHT
-        /// <summary>
-        /// Initializes a new instance of the XGraphics class.
-        /// </summary>
-        /// <param name="dc">The drawing context.</param>
-        /// <param name="size">The size.</param>
-        /// <param name="pageUnit">The page unit.</param>
-        /// <param name="pageDirection">The page direction.</param>
-        XGraphics(DrawingContext dc, XSize size, XGraphicsUnit pageUnit, XPageDirection pageDirection)
-        {
-            if (dc == null)
-            {
-                //throw new ArgumentNullException("dc");
-                _dv = new DrawingVisual();
-                dc = _dv.RenderOpen();
-            }
-
-            _gsStack = new GraphicsStateStack(this);
-            TargetContext = XGraphicTargetContext.WPF;
-            _dc = dc;
-            _drawGraphics = true;
-            _pageSize = new XSize(size.Width, size.Height);
-            _pageUnit = pageUnit;
-            switch (pageUnit)
-            {
-                case XGraphicsUnit.Point:
-                    _pageSizePoints = new XSize(size.Width, size.Height);
-                    break;
-
-                case XGraphicsUnit.Inch:
-                    _pageSizePoints = new XSize(XUnit.FromInch(size.Width), XUnit.FromInch(size.Height));
-                    break;
-
-                case XGraphicsUnit.Millimeter:
-                    _pageSizePoints = new XSize(XUnit.FromMillimeter(size.Width), XUnit.FromMillimeter(size.Height));
-                    break;
-
-                case XGraphicsUnit.Centimeter:
-                    _pageSizePoints = new XSize(XUnit.FromCentimeter(size.Width), XUnit.FromCentimeter(size.Height));
-                    break;
-
-                case XGraphicsUnit.Presentation:
-                    _pageSizePoints = new XSize(XUnit.FromPresentation(size.Width), XUnit.FromPresentation(size.Height));
-                    break;
-
-                default:
-                    throw new NotImplementedException("unit");
-            }
-
-            _pageDirection = pageDirection;
-            Initialize();
-        }
-#endif
-
-#if WPF
-        /// <summary>
-        /// Initializes a new instance of the XGraphics class.
-        /// </summary>
-        /// <param name="canvas">The canvas.</param>
-        /// <param name="size">The size.</param>
-        /// <param name="pageUnit">The page unit.</param>
-        /// <param name="pageDirection">The page direction.</param>
-        XGraphics(Canvas canvas, XSize size, XGraphicsUnit pageUnit, XPageDirection pageDirection)
-        {
-            //throw new ArgumentNullException("canvas");
-            if (canvas == null)
-                canvas = new Canvas();
-
-#if !SILVERLIGHT
-            // Create DrawingVisual as container for the content of the page.
-            _dv = new DrawingVisual();
-            // Create a host that shows the visual.
-            VisualPresenter vp = new VisualPresenter();
-            vp.Children.Add(_dv);
-            // The canvas only contains the host of the DrawingVisual.
-            canvas.Children.Add(vp);
-            _dc = _dv.RenderOpen();
-            TargetContext = XGraphicTargetContext.WPF;
-            //////VisualBrush brush = new VisualBrush(_dv);
-            ////////brush.ViewboxUnits = BrushMappingMode.
-            //////brush.Viewport=new Rect(new Point(), size.ToSize());
-            //////brush.Viewbox=new Rect(new Point(), size.ToSize());
-            ////////brush.Viewport=new Rect(new Point(), (Size)size);
-            //////brush.AutoLayoutContent = true;
-            //////canvas.Background = brush;
-#else
-            _dc = new AgDrawingContext(canvas);
-#endif
-
-            _gsStack = new GraphicsStateStack(this);
-            TargetContext = XGraphicTargetContext.WPF;
-
-            _drawGraphics = true;
-            _pageSize = new XSize(size.Width, size.Height);
-            _pageUnit = pageUnit;
-            switch (pageUnit)
-            {
-                case XGraphicsUnit.Point:
-                    _pageSizePoints = new XSize(size.Width, size.Height);
-                    break;
-
-                case XGraphicsUnit.Inch:
-                    _pageSizePoints = new XSize(XUnit.FromInch(size.Width), XUnit.FromInch(size.Height));
-                    break;
-
-                case XGraphicsUnit.Millimeter:
-                    _pageSizePoints = new XSize(XUnit.FromMillimeter(size.Width), XUnit.FromMillimeter(size.Height));
-                    break;
-
-                case XGraphicsUnit.Centimeter:
-                    _pageSizePoints = new XSize(XUnit.FromCentimeter(size.Width), XUnit.FromCentimeter(size.Height));
-                    break;
-
-                case XGraphicsUnit.Presentation:
-                    _pageSizePoints = new XSize(XUnit.FromPresentation(size.Width), XUnit.FromPresentation(size.Height));
-                    break;
-
-                default:
-                    throw new NotImplementedException("unit");
-            }
-
-            _pageDirection = pageDirection;
-            Initialize();
-        }
-#endif
-
-#if UWP
-        /// <summary>
-        /// Initializes a new instance of the XGraphics class.
-        /// </summary>
-        /// <param name="canvasDrawingSession">The canvas.</param>
-        /// <param name="size">The size.</param>
-        /// <param name="pageUnit">The page unit.</param>
-        /// <param name="pageDirection">The page direction.</param>
-        XGraphics(CanvasDrawingSession canvasDrawingSession, XSize size, XGraphicsUnit pageUnit, XPageDirection pageDirection)
-        {
-            if (canvasDrawingSession == null)
-                throw new ArgumentNullException("canvasDrawingSession");
-
-            _cds = canvasDrawingSession;
-
-            _gsStack = new GraphicsStateStack(this);
-            TargetContext = XGraphicTargetContext.WPF;
-
-            _drawGraphics = true;
-            _pageSize = new XSize(size.Width, size.Height);
-            _pageUnit = pageUnit;
-            switch (pageUnit)
-            {
-                case XGraphicsUnit.Point:
-                    _pageSizePoints = new XSize(size.Width, size.Height);
-                    break;
-
-                case XGraphicsUnit.Inch:
-                    _pageSizePoints = new XSize(XUnit.FromInch(size.Width), XUnit.FromInch(size.Height));
-                    break;
-
-                case XGraphicsUnit.Millimeter:
-                    _pageSizePoints = new XSize(XUnit.FromMillimeter(size.Width), XUnit.FromMillimeter(size.Height));
-                    break;
-
-                case XGraphicsUnit.Centimeter:
-                    _pageSizePoints = new XSize(XUnit.FromCentimeter(size.Width), XUnit.FromCentimeter(size.Height));
-                    break;
-
-                case XGraphicsUnit.Presentation:
-                    _pageSizePoints = new XSize(XUnit.FromPresentation(size.Width), XUnit.FromPresentation(size.Height));
-                    break;
-
-                default:
-                    throw new NotImplementedException("unit");
-            }
-
-            _pageDirection = pageDirection;
-            Initialize();
-        }
-#endif
-
         /// <summary>
         /// Initializes a new instance of the XGraphics class for drawing on a PDF page.
         /// </summary>
@@ -385,18 +176,6 @@ namespace PdfSharp.Drawing  // #??? Clean up
             //_gfx = Graphics.FromHwnd(IntPtr.Zero);  // _gfx should not be necessary anymore.
             _gfx = null;
             TargetContext = XGraphicTargetContext.GDI;
-#endif
-#if WPF && !SILVERLIGHT
-            _dv = new DrawingVisual();
-            _dc = _dv.RenderOpen();
-            TargetContext = XGraphicTargetContext.WPF;
-#endif
-#if SILVERLIGHT
-            _dc = new AgDrawingContext(new Canvas());
-            TargetContext = XGraphicTargetContext.WPF;
-#endif
-#if GDI && WPF
-            TargetContext = PdfSharp.Internal.TargetContextHelper.TargetContext;
 #endif
             _renderer = new PdfSharp.Drawing.Pdf.XGraphicsPdfRenderer(page, this, options);
             _pageSizePoints = new XSize(page.Width, page.Height);
@@ -529,30 +308,6 @@ namespace PdfSharp.Drawing  // #??? Clean up
             finally { Lock.ExitGdiPlus(); }
             Initialize();
 #endif
-#if WPF && !GDI
-            TargetContext = XGraphicTargetContext.WPF;
-#if !SILVERLIGHT
-            // If form.Owner is null create a meta file.
-            if (form.Owner == null)
-            {
-                _dv = new DrawingVisual();
-                _dc = _dv.RenderOpen();
-                _drawGraphics = true;
-            }
-            else
-            {
-                _dv = new DrawingVisual();
-                _dc = _dv.RenderOpen();
-            }
-            if (form.Owner != null)
-                _renderer = new PdfSharp.Drawing.Pdf.XGraphicsPdfRenderer(form, this);
-            _pageSize = form.Size;
-            Initialize();
-#else
-            throw new NotImplementedException(); // AGHACK
-            //Initialize();
-#endif
-#endif
         }
 
         /// <summary>
@@ -573,17 +328,6 @@ namespace PdfSharp.Drawing  // #??? Clean up
             //XGraphics gfx = new XGraphics((System.Drawing.Graphics)null, size, pageUnit, pageDirection);
             XGraphics gfx = new XGraphics((System.Drawing.Graphics)null, size, pageUnit, pageDirection);
             return gfx;
-#endif
-#if WPF && !SILVERLIGHT
-            XGraphics gfx = new XGraphics((System.Windows.Media.DrawingContext)null, size, pageUnit, pageDirection);
-            return gfx;
-#endif
-#if SILVERLIGHT
-            XGraphics gfx = new XGraphics(new Canvas(), size, pageUnit, pageDirection);
-            return gfx;
-#endif
-#if NETFX_CORE || UWP // NETFX_CORE_TODO
-            return null;
 #endif
         }
 
@@ -624,37 +368,7 @@ namespace PdfSharp.Drawing  // #??? Clean up
         //  return new XGraphics(graphics, size, XGraphicsUnit.Point, pageDirection);
         //}
 #endif
-
-#if WPF && !SILVERLIGHT
-        /// <summary>
-        /// Creates a new instance of the XGraphics class from a System.Windows.Media.DrawingContext object.
-        /// </summary>
-        public static XGraphics FromDrawingContext(DrawingContext drawingContext, XSize size, XGraphicsUnit unit)
-        {
-            return new XGraphics(drawingContext, size, unit, XPageDirection.Downwards);
-        }
-#endif
-
-#if WPF
-        /// <summary>
-        /// Creates a new instance of the XGraphics class from a System.Windows.Media.DrawingContext object.
-        /// </summary>
-        public static XGraphics FromCanvas(Canvas canvas, XSize size, XGraphicsUnit unit)
-        {
-            return new XGraphics(canvas, size, unit, XPageDirection.Downwards);
-        }
-#endif
-
-#if UWP
-        /// <summary>
-        /// Creates a new instance of the XGraphics class from a  Microsoft.Graphics.Canvas.CanvasDrawingSession object.
-        /// </summary>
-        public static XGraphics FromCanvasDrawingSession(CanvasDrawingSession drawingSession, XSize size, XGraphicsUnit unit)
-        {
-            return new XGraphics(drawingSession, size, unit, XPageDirection.Downwards);
-        }
-#endif
-
+        
         /// <summary>
         /// Creates a new instance of the XGraphics class from a PdfSharp.Pdf.PdfPage object.
         /// </summary>
@@ -760,14 +474,7 @@ namespace PdfSharp.Drawing  // #??? Clean up
                 image.XImageState = image.XImageState | XImageState.UsedInDrawingContext;
                 return new XGraphics(gfx, new XSize(image.PixelWidth, image.PixelHeight), unit, XPageDirection.Downwards);
 #endif
-#if WPF && !GDI
-                DiagnosticsHelper.ThrowNotImplementedException("WPF image");
-                return null;
-#endif
-#if NETFX_CORE
-                DiagnosticsHelper.ThrowNotImplementedException("NETFX_CORE image");
-                return null;
-#endif
+
             }
             return null;
         }
@@ -2160,16 +1867,6 @@ namespace PdfSharp.Drawing  // #??? Clean up
         }
 #endif
 
-#if WPF
-        /// <summary>
-        /// Draws a rectangles with round corners.
-        /// </summary>
-        public void DrawRoundedRectangle(XBrush brush, Rect rect, SysSize ellipseSize)
-        {
-            DrawRoundedRectangle(brush, rect.X, rect.Y, rect.Width, rect.Height, ellipseSize.Width, ellipseSize.Height);
-        }
-#endif
-
 #if GDI
         /// <summary>
         /// Draws a rectangles with round corners.
@@ -2585,16 +2282,6 @@ namespace PdfSharp.Drawing  // #??? Clean up
         }
 #endif
 
-#if WPF
-        /// <summary>
-        /// Draws a polygon defined by an array of points.
-        /// </summary>
-        public void DrawPolygon(XBrush brush, SysPoint[] points, XFillMode fillmode)
-        {
-            DrawPolygon(brush, MakeXPointArray(points, 0, points.Length), fillmode);
-        }
-#endif
-
 #if GDI
         /// <summary>
         /// Draws a polygon defined by an array of points.
@@ -2769,10 +2456,6 @@ namespace PdfSharp.Drawing  // #??? Clean up
                     }
                     finally { Lock.ExitGdiPlus(); }
                 }
-#endif
-#if WPF
-                if (TargetContext == XGraphicTargetContext.WPF)
-                    DrawPie(pen, null, x, y, width, height, startAngle, sweepAngle);
 #endif
             }
 
@@ -5036,25 +4719,6 @@ namespace PdfSharp.Drawing  // #??? Clean up
         }
 #endif
 
-#if WPF || NETFX_CORE
-        /// <summary>
-        /// Converts a Point[] into a XPoint[].
-        /// </summary>
-        internal static XPoint[] MakeXPointArray(SysPoint[] points, int offset, int count)
-        {
-            if (points == null)
-                return null;
-
-            //int length = points.Length;
-            XPoint[] result = new XPoint[count];
-            for (int idx = 0, srcIdx = offset; idx < count; idx++, srcIdx++)
-            {
-                result[idx].X = points[srcIdx].X;
-                result[idx].Y = points[srcIdx].Y;
-            }
-            return result;
-        }
-#endif
 
 #if GDI
         /// <summary>
@@ -5091,26 +4755,6 @@ namespace PdfSharp.Drawing  // #??? Clean up
             {
                 XRect rect = rects[srcIdx];
                 result[idx] = new GdiRectF((float)rect.X, (float)rect.Y, (float)rect.Width, (float)rect.Height);
-            }
-            return result;
-        }
-#endif
-
-#if WPF || NETFX_CORE
-        /// <summary>
-        /// Converts an XPoint[] into a Point[].
-        /// </summary>
-        internal static SysPoint[] MakePointArray(XPoint[] points)
-        {
-            if (points == null)
-                return null;
-
-            int count = points.Length;
-            SysPoint[] result = new SysPoint[count];
-            for (int idx = 0; idx < count; idx++)
-            {
-                result[idx].X = points[idx].X;
-                result[idx].Y = points[idx].Y;
             }
             return result;
         }

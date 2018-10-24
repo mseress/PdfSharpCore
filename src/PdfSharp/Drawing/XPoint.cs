@@ -31,32 +31,10 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
-#if CORE
-#endif
-#if GDI
 using System.Drawing;
-#endif
-#if WPF
-using System.Windows;
-using SysPoint = System.Windows.Point;
-using SysSize = System.Windows.Size;
-#endif
-#if NETFX_CORE
-using Windows.UI.Xaml.Media;
-using SysPoint = Windows.Foundation.Point;
-using SysSize = Windows.Foundation.Size;
-#endif
-#if !EDF_CORE
 using PdfSharp.Internal;
-#else
-using PdfSharp.Internal;
-#endif
 
-#if !EDF_CORE
 namespace PdfSharp.Drawing
-#else
-namespace Edf.Drawing
-#endif
 {
     /// <summary>
     /// Represents a pair of floating point x- and y-coordinates that defines a point
@@ -81,17 +59,6 @@ namespace Edf.Drawing
         /// Initializes a new instance of the XPoint class with the specified point.
         /// </summary>
         public XPoint(System.Drawing.Point point)
-        {
-            _x = point.X;
-            _y = point.Y;
-        }
-#endif
-
-#if WPF || NETFX_CORE
-        /// <summary>
-        /// Initializes a new instance of the XPoint class with the specified point.
-        /// </summary>
-        public XPoint(SysPoint point)
         {
             _x = point.X;
             _y = point.Y;
@@ -399,23 +366,7 @@ namespace Edf.Drawing
             return new XVector(point._x, point._y);
         }
 
-#if WPF || NETFX_CORE
-        /// <summary>
-        /// Performs an implicit conversion from XPoint to Point.
-        /// </summary>
-        public static implicit operator SysPoint(XPoint point)
-        {
-            return new SysPoint(point.X, point.Y);
-        }
 
-        /// <summary>
-        /// Performs an implicit conversion from Point to XPoint.
-        /// </summary>
-        public static implicit operator XPoint(SysPoint point)
-        {
-            return new XPoint(point.X, point.Y);
-        }
-#endif
 
         /// <summary>
         /// Gets the DebuggerDisplayAttribute text.

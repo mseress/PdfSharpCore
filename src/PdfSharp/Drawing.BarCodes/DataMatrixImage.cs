@@ -33,10 +33,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-#endif
 
 // WPFHACK
 #pragma warning disable 162

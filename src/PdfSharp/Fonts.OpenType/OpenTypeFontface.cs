@@ -44,14 +44,6 @@ using GdiFontFamily = System.Drawing.FontFamily;
 using GdiFont = System.Drawing.Font;
 using GdiFontStyle = System.Drawing.FontStyle;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Media;
-using WpfFontFamily = System.Windows.Media.FontFamily;
-using WpfTypeface = System.Windows.Media.Typeface;
-using WpfGlyphTypeface = System.Windows.Media.GlyphTypeface;
-#endif
 using PdfSharp.Fonts;
 #if !EDF_CORE
 using PdfSharp.Drawing;
@@ -70,7 +62,7 @@ namespace PdfSharp.Fonts.OpenType
     /// Represents an OpenType fontface in memory.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay}")]
-    internal sealed class OpenTypeFontface
+    public sealed class OpenTypeFontface
     {
         // Implementation Notes
         // OpenTypeFontface represents a 'decompiled' font file in memory.

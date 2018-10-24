@@ -42,21 +42,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using PdfSharp.Internal;
-
-#endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-#if !GDI
-using PdfSharp.Internal;
-#endif
-
-#endif
-#if NETFX_CORE
-using Windows.UI.Xaml.Media.Imaging;
-using PdfSharp.Internal;
-
 #endif
 
 // WPFHACK
@@ -77,7 +62,6 @@ namespace PdfSharp.Drawing
         /// </summary>
         internal XBitmapImage(int width, int height)
         {
-#if GDI || CORE_WITH_GDI
             try
             {
                 Lock.EnterGdiPlus();
@@ -85,16 +69,8 @@ namespace PdfSharp.Drawing
                 _gdiImage = new Bitmap(width, height);
             }
             finally { Lock.ExitGdiPlus(); }
-#endif
-#if WPF
-            DiagnosticsHelper.ThrowNotImplementedException("CreateBitmap");
-#endif
-#if NETFX_CORE
-            DiagnosticsHelper.ThrowNotImplementedException("CreateBitmap");
-#endif
-#if CORE || GDI && !WPF // Prevent unreachable code error
+
             Initialize();
-#endif
         }
 
         /// <summary>

@@ -31,10 +31,6 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-#endif
 
 // Not used in PDFsharp 1.x.
 

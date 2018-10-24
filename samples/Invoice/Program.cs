@@ -1,6 +1,7 @@
 ﻿using MigraDoc.DocumentObjectModel;
 using MigraDoc.Rendering;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -44,13 +45,10 @@ namespace Invoice
                 pdfRenderer.RenderDocument();
 
                 // Save the PDF document...
-                string filename = "out/invoice.pdf";
-#if DEBUG
-                // I don't want to close the document constantly...
-                filename = "out/invoice-" + Guid.NewGuid().ToString("N").ToLower() + ".pdf";
-#endif
+                string filename = "out/invoice-" + DateTimeOffset.UtcNow.Ticks.ToString() + ".pdf";
+
                 pdfRenderer.Save(filename);
-                // ...and start a viewer.
+
                 //Process.Start(filename);
             }
             catch (Exception ex)

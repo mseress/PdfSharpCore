@@ -34,21 +34,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Text;
-#if GDI
 using System.Drawing;
 using System.Drawing.Drawing2D;
-#endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-using SysPoint = System.Windows.Point;
-using SysSize = System.Windows.Size;
-#endif
-#if NETFX_CORE
-using Windows.UI.Xaml.Media;
-using SysPoint = Windows.Foundation.Point;
-using SysSize = Windows.Foundation.Size;
-#endif
 using PdfSharp.Fonts.OpenType;
 using PdfSharp.Internal;
 using PdfSharp.Pdf;
@@ -392,34 +379,9 @@ namespace PdfSharp.Drawing.Pdf
             if (pen == null && brush == null)
                 throw new ArgumentNullException("pen");
 
-#if CORE
             Realize(pen, brush);
             AppendPath(path._corePath);
             AppendStrokeFill(pen, brush, path.FillMode, false);
-#endif
-#if GDI && !WPF
-            Realize(pen, brush);
-            AppendPath(path._gdipPath);
-            AppendStrokeFill(pen, brush, path.FillMode, false);
-#endif
-#if WPF && !GDI
-            Realize(pen, brush);
-            AppendPath(path._pathGeometry);
-            AppendStrokeFill(pen, brush, path.FillMode, false);
-#endif
-#if WPF && GDI
-            Realize(pen, brush);
-            if (_gfx.TargetContext == XGraphicTargetContext.GDI)
-                AppendPath(path._gdipPath);
-            else
-                AppendPath(path._pathGeometry);
-            AppendStrokeFill(pen, brush, path.FillMode, false);
-#endif
-#if NETFX_CORE
-            Realize(pen, brush);
-            AppendPath(path._pathGeometry);
-            AppendStrokeFill(pen, brush, path.FillMode, false);
-#endif
         }
 
         // ----- DrawString ---------------------------------------------------------------------------
@@ -1137,29 +1099,6 @@ namespace PdfSharp.Drawing.Pdf
             }
         }
 
-#if WPF || NETFX_CORE
-        void AppendPartialArc(SysPoint point1, SysPoint point2, double rotationAngle,
-            SysSize size, bool isLargeArc, SweepDirection sweepDirection, PathStart pathStart)
-        {
-            const string format = Config.SignificantFigures4;
-
-            Debug.Assert(pathStart == PathStart.Ignore1st);
-
-            int pieces;
-            PointCollection points = GeometryHelper.ArcToBezier(point1.X, point1.Y, size.Width, size.Height, rotationAngle, isLargeArc,
-              sweepDirection == SweepDirection.Clockwise, point2.X, point2.Y, out pieces);
-
-            int count = points.Count;
-            int start = count % 3 == 1 ? 1 : 0;
-            if (start == 1)
-                AppendFormatPoint("{0:" + format + "} {1:" + format + "} m\n", points[0].X, points[0].Y);
-            for (int idx = start; idx < count; idx += 3)
-                AppendFormat3Points("{0:" + format + "} {1:" + format + "} {2:" + format + "} {3:" + format + "} {4:" + format + "} {5:" + format + "} c\n",
-                  points[idx].X, points[idx].Y,
-                  points[idx + 1].X, points[idx + 1].Y,
-                  points[idx + 2].X, points[idx + 2].Y);
-        }
-#endif
 
         /// <summary>
         /// Appends a Bézier curve for a cardinal spline through pt1 and pt2.
@@ -1384,116 +1323,6 @@ namespace PdfSharp.Drawing.Pdf
                         if ((types[idx] & PathPointTypeCloseSubpath) != 0)
                             Append("h\n");
                         break;
-                }
-            }
-        }
-#endif
-
-#if WPF || NETFX_CORE
-        /// <summary>
-        /// Appends the content of a PathGeometry object.
-        /// </summary>
-        internal void AppendPath(PathGeometry geometry)
-        {
-            const string format = Config.SignificantFigures4;
-
-            foreach (PathFigure figure in geometry.Figures)
-            {
-#if DEBUG
-                //#warning For DdlGBE_Chart_Layout (WPF) execution stucks at this Assertion.
-                // The empty Figure is added via XGraphicsPath.CurrentPathFigure Getter.
-                // Some methods like XGraphicsPath.AddRectangle() or AddLine() use this emtpy Figure to add Segments, others like AddEllipse() don't.
-                // Here, _pathGeometry.AddGeometry() of course ignores this first Figure and adds a second.
-                // Encapsulate relevant Add methods to delete a first emty Figure or move the Addition of an first empty Figure to a GetOrCreateCurrentPathFigure() or simply remove Assertion?
-                // Look for:
-                // MAOS4STLA: CurrentPathFigure.
-
-
-                if (figure.Segments.Count == 0)
-                    42.GetType();
-                Debug.Assert(figure.Segments.Count > 0);
-#endif
-                // Skip the Move if the segment is empty. Workaround for empty segments. Empty segments should not occur (see Debug.Assert above).
-                if (figure.Segments.Count > 0)
-                {
-                    // Move to start point.
-                    SysPoint currentPoint = figure.StartPoint;
-                    AppendFormatPoint("{0:" + format + "} {1:" + format + "} m\n", currentPoint.X, currentPoint.Y);
-
-                    foreach (PathSegment segment in figure.Segments)
-                    {
-                        Type type = segment.GetType();
-                        if (type == typeof(LineSegment))
-                        {
-                            // Draw a single line.
-                            SysPoint point = ((LineSegment)segment).Point;
-                            currentPoint = point;
-                            AppendFormatPoint("{0:" + format + "} {1:" + format + "} l\n", point.X, point.Y);
-                        }
-                        else if (type == typeof(PolyLineSegment))
-                        {
-                            // Draw connected lines.
-                            PointCollection points = ((PolyLineSegment)segment).Points;
-                            foreach (SysPoint point in points)
-                            {
-                                currentPoint = point;  // I forced myself not to optimize this assignment.
-                                AppendFormatPoint("{0:" + format + "} {1:" + format + "} l\n", point.X, point.Y);
-                            }
-                        }
-                        else if (type == typeof(BezierSegment))
-                        {
-                            // Draw Bézier curve.
-                            BezierSegment seg = (BezierSegment)segment;
-                            SysPoint point1 = seg.Point1;
-                            SysPoint point2 = seg.Point2;
-                            SysPoint point3 = seg.Point3;
-                            AppendFormat3Points("{0:" + format + "} {1:" + format + "} {2:" + format + "} {3:" + format + "} {4:" + format + "} {5:" + format + "} c\n",
-                                point1.X, point1.Y, point2.X, point2.Y, point3.X, point3.Y);
-                            currentPoint = point3;
-                        }
-                        else if (type == typeof(PolyBezierSegment))
-                        {
-                            // Draw connected Bézier curves.
-                            PointCollection points = ((PolyBezierSegment)segment).Points;
-                            int count = points.Count;
-                            if (count > 0)
-                            {
-                                Debug.Assert(count % 3 == 0, "Number of Points in PolyBezierSegment are not a multiple of 3.");
-                                for (int idx = 0; idx < count - 2; idx += 3)
-                                {
-                                    SysPoint point1 = points[idx];
-                                    SysPoint point2 = points[idx + 1];
-                                    SysPoint point3 = points[idx + 2];
-                                    AppendFormat3Points("{0:" + format + "} {1:" + format + "} {2:" + format + "} {3:" + format + "} {4:" + format + "} {5:" + format + "} c\n",
-                                        point1.X, point1.Y, point2.X, point2.Y, point3.X, point3.Y);
-                                }
-                                currentPoint = points[count - 1];
-                            }
-                        }
-                        else if (type == typeof(ArcSegment))
-                        {
-                            // Draw arc.
-                            ArcSegment seg = (ArcSegment)segment;
-                            AppendPartialArc(currentPoint, seg.Point, seg.RotationAngle, seg.Size, seg.IsLargeArc, seg.SweepDirection, PathStart.Ignore1st);
-                            currentPoint = seg.Point;
-                        }
-                        else if (type == typeof(QuadraticBezierSegment))
-                        {
-                            QuadraticBezierSegment seg = (QuadraticBezierSegment)segment;
-                            currentPoint = seg.Point2;
-                            // TODOWPF: Undone because XGraphics has no such curve type
-                            throw new NotImplementedException("AppendPath with QuadraticBezierSegment.");
-                        }
-                        else if (type == typeof(PolyQuadraticBezierSegment))
-                        {
-                            PolyQuadraticBezierSegment seg = (PolyQuadraticBezierSegment)segment;
-                            currentPoint = seg.Points[seg.Points.Count - 1];
-                            // TODOWPF: Undone because XGraphics has no such curve type
-                            throw new NotImplementedException("AppendPath with PolyQuadraticBezierSegment.");
-                        }
-                    }
-                    if (figure.IsClosed)
-                        Append("h\n");
                 }
             }
         }

@@ -29,14 +29,9 @@
 
 using System;
 using System.IO;
-#if GDI
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-#endif
-#if WPF
-using System.Windows.Media;
-#endif
 using PdfSharp.Internal;
 using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
@@ -219,33 +214,7 @@ namespace PdfSharp.Drawing
             }
         }
         int _pageCount = -1;
-
-        /// <summary>
-        /// Gets the width in point of the page identified by the property PageNumber.
-        /// </summary>
-        [Obsolete("Use either PixelWidth or PointWidth. Temporarily obsolete because of rearrangements for WPF.")]
-        public override double Width
-        {
-            get
-            {
-                PdfPage page = ExternalDocument.Pages[_pageNumber - 1];
-                return page.Width;
-            }
-        }
-
-        /// <summary>
-        /// Gets the height in point of the page identified by the property PageNumber.
-        /// </summary>
-        [Obsolete("Use either PixelHeight or PointHeight. Temporarily obsolete because of rearrangements for WPF.")]
-        public override double Height
-        {
-            get
-            {
-                PdfPage page = ExternalDocument.Pages[_pageNumber - 1];
-                return page.Height;
-            }
-        }
-
+        
         /// <summary>
         /// Gets the width in point of the page identified by the property PageNumber.
         /// </summary>

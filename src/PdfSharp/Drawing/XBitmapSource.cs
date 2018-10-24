@@ -27,25 +27,11 @@
 // DEALINGS IN THE SOFTWARE.
 #endregion
 
-#if CORE
-#endif
-
 using System.Diagnostics;
 using PdfSharp.Internal;
-
-#if GDI
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-#endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-#endif
-#if NETFX_CORE
-using Windows.UI.Xaml.Media.Imaging;
-#endif
 
 // WPFHACK
 #pragma warning disable 0169
@@ -67,26 +53,12 @@ namespace PdfSharp.Drawing
         {
             get
             {
-#if (CORE_WITH_GDI || GDI) && !WPF
                 try
                 {
                     Lock.EnterGdiPlus();
                     return _gdiImage.Width;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                int gdiWidth = _gdiImage.Width;
-                int wpfWidth = _wpfImage.PixelWidth;
-                Debug.Assert(gdiWidth == wpfWidth);
-                return wpfWidth;
-#endif
-#if WPF && !GDI
-                return _wpfImage.PixelWidth;
-#endif
-#if NETFX_CORE || UWP
-                return _wrtImage.PixelWidth;
-#endif
             }
         }
 
@@ -97,26 +69,12 @@ namespace PdfSharp.Drawing
         {
             get
             {
-#if (CORE_WITH_GDI || GDI) && !WPF
                 try
                 {
                     Lock.EnterGdiPlus();
                     return _gdiImage.Height;
                 }
                 finally { Lock.ExitGdiPlus(); }
-#endif
-#if GDI && WPF
-                int gdiHeight = _gdiImage.Height;
-                int wpfHeight = _wpfImage.PixelHeight;
-                Debug.Assert(gdiHeight == wpfHeight);
-                return wpfHeight;
-#endif
-#if WPF && !GDI
-                return _wpfImage.PixelHeight;
-#endif
-#if NETFX_CORE || UWP
-                return _wrtImage.PixelHeight;
-#endif
             }
         }
     }

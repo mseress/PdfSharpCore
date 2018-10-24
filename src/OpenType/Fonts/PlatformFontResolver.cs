@@ -29,22 +29,11 @@
 
 using System;
 using System.Diagnostics;
-#if CORE || GDI
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using GdiFontFamily = System.Drawing.FontFamily;
 using GdiFont = System.Drawing.Font;
 using GdiFontStyle = System.Drawing.FontStyle;
-#endif
-#if WPF
-using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Media;
-using WpfFontFamily = System.Windows.Media.FontFamily;
-using WpfTypeface = System.Windows.Media.Typeface;
-using WpfGlyphTypeface = System.Windows.Media.GlyphTypeface;
-using WpfStyleSimulations = System.Windows.Media.StyleSimulations;
-#endif
 using PdfSharp.Drawing;
 
 #pragma warning disable 1591
@@ -88,24 +77,9 @@ namespace PdfSharp.Fonts
             // It is possible that we already have the correct font source. E.g. we already have the regular typeface in cache
             // and looking now for the italic typeface, but no such font exists. In this case we get the regular font source
             // and cache again it with the italic typeface key. Furthermore in glyph typeface style simulation for italic is set.
-#if (CORE || GDI) && !WPF
             GdiFont gdiFont;
             XFontSource fontSource = CreateFontSource(familyName, fontResolvingOptions, out gdiFont, typefaceKey);
-#endif
-#if WPF && !SILVERLIGHT
-            WpfFontFamily wpfFontFamily;
-            WpfTypeface wpfTypeface;
-            WpfGlyphTypeface wpfGlyphTypeface;
-            XFontSource fontSource = CreateFontSource(familyName, fontResolvingOptions, out wpfFontFamily, out wpfTypeface, out wpfGlyphTypeface, typefaceKey);
-#endif
-#if SILVERLIGHT
-            //GlyphTypeface wpfGlyphTypeface;
-            XFontSource fontSource = null;//CreateFontSource(familyName, isBold, isItalic, out wpfGlyphTypeface, typefaceKey);
-#endif
-#if NETFX_CORE || UWP
-            //GlyphTypeface wpfGlyphTypeface;
-            XFontSource fontSource = null;//CreateFontSource(familyName, isBold, isItalic, out wpfGlyphTypeface, typefaceKey);
-#endif
+
             // If no such font exists return null. PDFsharp will fail.
             if (fontSource == null)
                 return null;
@@ -116,63 +90,16 @@ namespace PdfSharp.Fonts
             //#endif
             if (fontResolvingOptions.OverrideStyleSimulations)
             {
-#if (CORE || GDI) && !WPF
                 // TODO: Support style simulation for GDI+ platform fonts.
                 fontResolverInfo = new PlatformFontResolverInfo(typefaceKey, fontResolvingOptions.MustSimulateBold, fontResolvingOptions.MustSimulateItalic, gdiFont);
-#endif
-#if WPF && !SILVERLIGHT
-                fontResolverInfo = new PlatformFontResolverInfo(typefaceKey, fontResolvingOptions.MustSimulateBold, fontResolvingOptions.MustSimulateItalic,
-                    wpfFontFamily, wpfTypeface, wpfGlyphTypeface);
-#endif
             }
             else
             {
-#if (CORE || GDI) && !WPF
                 bool mustSimulateBold = gdiFont.Bold && !fontSource.Fontface.os2.IsBold;
                 bool mustSimulateItalic = gdiFont.Italic && !fontSource.Fontface.os2.IsItalic;
                 fontResolverInfo = new PlatformFontResolverInfo(typefaceKey, mustSimulateBold, mustSimulateItalic, gdiFont);
-#endif
-#if WPF && !SILVERLIGHT
-                // WPF knows what styles have to be simulated.
-                bool mustSimulateBold = (wpfGlyphTypeface.StyleSimulations & WpfStyleSimulations.BoldSimulation) == WpfStyleSimulations.BoldSimulation;
-                bool mustSimulateItalic = (wpfGlyphTypeface.StyleSimulations & WpfStyleSimulations.ItalicSimulation) == WpfStyleSimulations.ItalicSimulation;
-
-                // Weird behavior of WPF is fixed here in case we request a bold italic typeface.
-                // If only italic is available, bold is simulated based on italic.
-                // If only bold is available, italic is simulated based on bold.
-                // But if both bold and italic is available, italic face is used and bold is simulated.
-                // The latter case is reversed here, i.e. bold face is used and italic is simulated.
-                if (fontResolvingOptions.IsBoldItalic && mustSimulateBold && !mustSimulateItalic)
-                {
-                    // Try to get the bold typeface.
-                    string typefaceKeyBold = XGlyphTypeface.ComputeKey(familyName, true, false);
-                    FontResolverInfo infoBold = ResolveTypeface(familyName,
-                        new FontResolvingOptions(FontHelper.CreateStyle(true, false)), typefaceKeyBold);
-                    // Use it if it does not base on simulation.
-                    if (infoBold != null && infoBold.StyleSimulations == XStyleSimulations.None)
-                    {
-                        // Use existing bold typeface and simulate italic.
-                        fontResolverInfo = new PlatformFontResolverInfo(typefaceKeyBold, false, true,
-                            wpfFontFamily, wpfTypeface, wpfGlyphTypeface);
-                    }
-                    else
-                    {
-                        // Simulate both.
-                        fontResolverInfo = new PlatformFontResolverInfo(typefaceKey, true, true,
-                            wpfFontFamily, wpfTypeface, wpfGlyphTypeface);
-                    }
-                }
-                else
-                {
-                    fontResolverInfo = new PlatformFontResolverInfo(typefaceKey, mustSimulateBold, mustSimulateItalic,
-                        wpfFontFamily, wpfTypeface, wpfGlyphTypeface);
-                }
-#endif
             }
 
-#if SILVERLIGHT
-            fontResolverInfo = null; //new PlattformResolverInfo(typefaceKey, false, false, wpfGlyphTypeface);
-#endif
             FontFactory.CacheFontResolverInfo(typefaceKey, fontResolverInfo);
 
             // Register font data under the platform specific face name.
@@ -182,7 +109,6 @@ namespace PdfSharp.Fonts
             return fontResolverInfo;
         }
 
-#if (CORE_WITH_GDI || GDI) && !WPF
         /// <summary>
         /// Create a GDI+ font and use its handle to retrieve font data using native calls.
         /// </summary>
@@ -262,76 +188,5 @@ namespace PdfSharp.Fonts
             }
             return fontSource;
         }
-#endif
-
-#if WPF && !SILVERLIGHT
-        /// <summary>
-        /// Create a WPF GlyphTypeface and retrieve font data from it.
-        /// </summary>
-        internal static XFontSource CreateFontSource(string familyName, FontResolvingOptions fontResolvingOptions,
-            out WpfFontFamily wpfFontFamily, out WpfTypeface wpfTypeface, out WpfGlyphTypeface wpfGlyphTypeface, string typefaceKey)
-        {
-            if (string.IsNullOrEmpty(typefaceKey))
-                typefaceKey = XGlyphTypeface.ComputeKey(familyName, fontResolvingOptions);
-            XFontStyle style = fontResolvingOptions.FontStyle;
-
-#if DEBUG
-            if (StringComparer.OrdinalIgnoreCase.Compare(familyName, "Segoe UI Semilight") == 0
-                && (style & XFontStyle.BoldItalic) == XFontStyle.Italic)
-                familyName.GetType();
-#endif
-
-            // Use WPF technique to create font data.
-            wpfTypeface = XPrivateFontCollection.TryCreateTypeface(familyName, style, out wpfFontFamily);
-#if DEBUG__
-            if (wpfTypeface != null)
-            {
-                WpfGlyphTypeface glyphTypeface;
-                ICollection<WpfTypeface> list = wpfFontFamily.GetTypefaces();
-                foreach (WpfTypeface tf in list)
-                {
-                    if (!tf.TryGetGlyphTypeface(out glyphTypeface))
-                        Debug-Break.Break();
-                }
-
-                //if (!WpfTypeface.TryGetGlyphTypeface(out glyphTypeface))
-                //    throw new InvalidOperationException(PSSR.CannotGetGlyphTypeface(familyName));
-            }
-#endif
-            if (wpfFontFamily == null)
-                wpfFontFamily = new WpfFontFamily(familyName);
-
-            if (wpfTypeface == null)
-                wpfTypeface = FontHelper.CreateTypeface(wpfFontFamily, style);
-
-            // Let WPF choose the right glyph typeface.
-            if (!wpfTypeface.TryGetGlyphTypeface(out wpfGlyphTypeface))
-                throw new InvalidOperationException(PSSR.CannotGetGlyphTypeface(familyName));
-
-            // Get or create the font source and cache it under the specified typeface key.
-            XFontSource fontSource = XFontSource.GetOrCreateFromWpf(typefaceKey, wpfGlyphTypeface);
-            return fontSource;
-        }
-#endif
-
-#if SILVERLIGHT
-        /// <summary>
-        /// Silverlight has no access to the bytes of its fonts and therefore return null.
-        /// </summary>
-        internal static XFontSource CreateFontSource(string familyName, bool isBold, bool isItalic)
-        {
-            // PDFsharp does not provide a default font because this would blow up the assembly
-            // unnecessarily if the font is not needed. Provide your own font resolver to generate
-            // PDF files containing text.
-            return null;
-        }
-#endif
-
-#if NETFX_CORE
-        internal static XFontSource CreateFontSource(string familyName, bool isBold, bool isItalic, string typefaceKey)
-        {
-            throw new NotImplementedException();
-        }
-#endif
     }
 }

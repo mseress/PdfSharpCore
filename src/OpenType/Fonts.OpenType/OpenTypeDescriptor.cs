@@ -34,14 +34,8 @@ using System.Text;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 #endif
-#if WPF
-using System.Windows;
-using System.Windows.Media;
-#endif
 using PdfSharp.Pdf.Internal;
-#if !EDF_CORE
 using PdfSharp.Drawing;
-#endif
 
 namespace PdfSharp.Fonts.OpenType
 {

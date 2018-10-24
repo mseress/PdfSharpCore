@@ -30,14 +30,9 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-#if GDI
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-#endif
-#if WPF
-using System.Windows.Media;
-#endif
 using PdfSharp.Drawing.Pdf;
 using PdfSharp.Pdf;
 using PdfSharp.Pdf.Advanced;
@@ -257,8 +252,6 @@ namespace PdfSharp.Drawing
                 _pdfForm.Elements.SetInteger("/Length", length);
             }
 #endif
-#if WPF
-#endif
         }
 
         /// <summary>
@@ -291,26 +284,6 @@ namespace PdfSharp.Drawing
             get { return _formState != FormState.NotATemplate; }
         }
         internal FormState _formState;
-
-        /// <summary>
-        /// Get the width of the page identified by the property PageNumber.
-        /// </summary>
-        [Obsolete("Use either PixelWidth or PointWidth. Temporarily obsolete because of rearrangements for WPF. Currently same as PixelWidth, but will become PointWidth in future releases of PDFsharp.")]
-        public override double Width
-        {
-            //get { return templateSize.width; }
-            get { return _viewBox.Width; }
-        }
-
-        /// <summary>
-        /// Get the width of the page identified by the property PageNumber.
-        /// </summary>
-        [Obsolete("Use either PixelHeight or PointHeight. Temporarily obsolete because of rearrangements for WPF. Currently same as PixelHeight, but will become PointHeight in future releases of PDFsharp.")]
-        public override double Height
-        {
-            //get { return templateSize.height; }
-            get { return _viewBox.Height; }
-        }
 
         /// <summary>
         /// Get the width in point of this image.
@@ -537,34 +510,5 @@ namespace PdfSharp.Drawing
         internal PdfFormXObject _pdfForm;  // TODO: make private
 
         internal XGraphicsPdfRenderer PdfRenderer;
-
-#if WPF && !SILVERLIGHT
-        /// <summary>
-        /// Gets a value indicating whether this image is cmyk.
-        /// </summary>
-        /// <value><c>true</c> if this image is cmyk; otherwise, <c>false</c>.</value>
-        internal override bool IsCmyk
-        {
-            get { return false; } // not supported and not relevant
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this image is JPEG.
-        /// </summary>
-        /// <value><c>true</c> if this image is JPEG; otherwise, <c>false</c>.</value>
-        internal override bool IsJpeg
-        {
-            get { return base.IsJpeg; }// not supported and not relevant
-        }
-
-        /// <summary>
-        /// Gets the JPEG memory stream (if IsJpeg returns true).
-        /// </summary>
-        /// <value>The memory.</value>
-        public override MemoryStream Memory
-        {
-            get { throw new NotImplementedException(); }
-        }
-#endif
     }
 }

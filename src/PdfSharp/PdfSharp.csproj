@@ -48,32 +48,28 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Drawing\internal\**" />
+    <Compile Remove="Resources\images\**" />
+    <Compile Remove="SharpZipLib\SharpZip\**" />
     <Compile Remove="SilverlightInternals\**" />
     <Compile Remove="Silverlight\**" />
     <EmbeddedResource Remove="Drawing\internal\**" />
+    <EmbeddedResource Remove="Resources\images\**" />
+    <EmbeddedResource Remove="SharpZipLib\SharpZip\**" />
     <EmbeddedResource Remove="SilverlightInternals\**" />
     <EmbeddedResource Remove="Silverlight\**" />
     <None Remove="Drawing\internal\**" />
+    <None Remove="Resources\images\**" />
+    <None Remove="SharpZipLib\SharpZip\**" />
     <None Remove="SilverlightInternals\**" />
     <None Remove="Silverlight\**" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Drawing.BarCodes\DataMatrixImage.opensource.cs" />
-    <Compile Remove="Forms\PagePreview.cs" />
-    <Compile Remove="Forms\PagePreviewCanvas.cs" />
-    <Compile Remove="Windows\PagePreview-ag.xaml.cs" />
-    <Compile Remove="Windows\PagePreview-wpf.xaml.cs" />
-    <Compile Remove="Windows\PagePreviewDesignTimeData.cs" />
-    <Compile Remove="Windows\VisualPresenter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Assets\arial.ttf" />
-    <None Remove="Assets\stsong.ttf" />
-    <None Remove="Windows\PagePreview-ag.xaml" />
-    <None Remove="Windows\PagePreview-wpf.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Assets\stsong.ttf" />
     <EmbeddedResource Include="Resources\Messages.de.restext" />
     <EmbeddedResource Include="Resources\Messages.restext" />
     <None Include="StrongnameKey.snk" />
@@ -83,8 +79,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="Resources\images\" />
-    <Folder Include="SharpZipLib\SharpZip\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="4.5.1" />

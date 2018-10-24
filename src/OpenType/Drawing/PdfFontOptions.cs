@@ -32,9 +32,6 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 #endif
-#if WPF
-using System.Windows.Media;
-#endif
 using PdfSharp.Pdf;
 
 namespace PdfSharp.Drawing

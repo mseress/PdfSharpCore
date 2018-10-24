@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace PdfSharpCoreDemo
+namespace RenderObjectAndPage
 {
     class Program
     {

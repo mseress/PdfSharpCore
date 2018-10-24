@@ -235,16 +235,16 @@ namespace MigraDoc.DocumentObjectModel
         /// Sets the parent of the specified value.
         /// If a parent is already set, an ArgumentException will be thrown.
         /// </summary>
-        protected void SetParent(DocumentObject val)
+        protected void SetParent(DocumentObject value)
         {
-            if (val != null)
+            if (value != null)
             {
-                if (val.Parent != null)
-                    throw new ArgumentException(DomSR.ParentAlreadySet(val, this));
+                if (value.Parent != null)
+                    throw new ArgumentException(DomSR.ParentAlreadySet(value, this));
 
-                val._parent = this;
-                val._document = null;
-                val._section = null;
+                value._parent = this;
+                value._document = null;
+                value._section = null;
             }
         }
 

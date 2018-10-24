@@ -70,16 +70,7 @@ namespace MigraDoc.Rendering
             _previousListNumbers[ListType.NumberList3] = 0;
             _formattedDocument = new FormattedDocument(_document, this);
             //REM: Size should not be necessary in this case.
-#if true
             XGraphics gfx = XGraphics.CreateMeasureContext(new XSize(2000, 2000), XGraphicsUnit.Point, XPageDirection.Downwards);
-#else
-#if GDI
-      XGraphics gfx = XGraphics.FromGraphics(Graphics.FromHwnd(IntPtr.Zero), new XSize(2000, 2000));
-#endif
-#if WPF
-      XGraphics gfx = XGraphics.FromDrawingContext(null, new XSize(2000, 2000), XGraphicsUnit.Point);
-#endif
-#endif
             //      _previousListNumber = int.MinValue;
             //gfx.MUH = _unicode;
             //gfx.MFEH = _fontEmbedding;

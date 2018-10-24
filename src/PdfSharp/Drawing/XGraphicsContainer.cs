@@ -31,9 +31,6 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 #endif
-#if WPF
-using System.Windows.Media;
-#endif
 
 namespace PdfSharp.Drawing
 {
@@ -48,10 +45,6 @@ namespace PdfSharp.Drawing
             GdiState = state;
         }
         internal GraphicsState GdiState;
-#endif
-#if WPF
-        internal XGraphicsContainer()
-        { }
 #endif
         internal InternalGraphicsState InternalState;
     }

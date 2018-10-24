@@ -50,6 +50,7 @@ namespace PdfSharp.Fonts
         /// same instance of your font resolver in every subsequent setting of this property.
         /// In a web application set the font resolver in Global.asax.
         /// </summary>
+        /// <remarks>default is <see cref="PlatformFontResolver"/> </remarks>
         public static IFontResolver FontResolver
         {
             get { return _fontResolver; }

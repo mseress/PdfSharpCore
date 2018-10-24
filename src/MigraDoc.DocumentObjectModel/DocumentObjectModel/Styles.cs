@@ -202,13 +202,15 @@ namespace MigraDoc.DocumentObjectModel
         /// <summary>
         /// Initialize the built-in styles.
         /// </summary>
-        internal void SetupStyles()
+        public void SetupStyles()
         {
             Style style;
 
             // First standard style.
-            style = new Style(Style.DefaultParagraphFontName, null);
-            style.IsReadOnly = true;
+            style = new Style(Style.DefaultParagraphFontName, null)
+            {
+                IsReadOnly = true
+            };
             style._styleType.Value = (int)StyleType.Character;
             style._buildIn.Value = true;
             Add(style);

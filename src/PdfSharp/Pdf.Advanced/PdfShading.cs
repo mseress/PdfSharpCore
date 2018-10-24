@@ -28,13 +28,8 @@
 #endregion
 
 using System;
-#if GDI
 using System.Drawing;
 using System.Drawing.Imaging;
-#endif
-#if WPF
-using System.Windows.Media;
-#endif
 using PdfSharp.Drawing;
 using PdfSharp.Drawing.Pdf;
 using PdfSharp.Pdf.Internal;

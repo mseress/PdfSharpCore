@@ -27,13 +27,8 @@
 // DEALINGS IN THE SOFTWARE.
 #endregion
 
-#if GDI
 using System.Drawing;
 using System.Drawing.Imaging;
-#endif
-#if WPF
-using System.Windows.Media;
-#endif
 
 namespace PdfSharp.Pdf.Advanced
 {
@@ -144,7 +139,7 @@ namespace PdfSharp.Pdf.Advanced
 
             /// <summary>
             /// (Required) A resource dictionary containing all of the named resources required by
-            /// the pattern’s content stream (see Section 3.7.2, “Resource Dictionaries”).
+            /// the pattern’s content stream (see Section 3.7.2, “Resource Dictionaries?.
             /// </summary>
             [KeyInfo(KeyType.Dictionary | KeyType.Required)]
             public new const string Resources = "/Resources";

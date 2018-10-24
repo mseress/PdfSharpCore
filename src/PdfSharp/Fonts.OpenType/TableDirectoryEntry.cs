@@ -41,7 +41,7 @@ namespace PdfSharp.Fonts.OpenType
     /// <summary>
     /// Represents an entry in the fonts table dictionary.
     /// </summary>
-    internal class TableDirectoryEntry
+    public class TableDirectoryEntry
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="TableDirectoryEntry"/> class.

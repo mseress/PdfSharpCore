@@ -27,9 +27,7 @@
 // DEALINGS IN THE SOFTWARE.
 #endregion
 
-#if GDI
 using System.Drawing;
-#endif
 
 namespace PdfSharp.Drawing
 {

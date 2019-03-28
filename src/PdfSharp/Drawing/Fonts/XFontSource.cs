@@ -71,7 +71,7 @@ namespace PdfSharp.Drawing
             // Application
             var executingPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             searchingPaths.Add(executingPath);
-            // Windows
+            // Windows fonts
             var systemFontsPath = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
             if (!string.IsNullOrWhiteSpace(systemFontsPath))
             {
@@ -79,7 +79,7 @@ namespace PdfSharp.Drawing
             }
             else
             {
-                // Debian
+                // Debian fonts
                 searchingPaths.Add("/usr/share/fonts/truetype");
                 //searchingPaths.Add("/usr/share/X11/fonts");
                 //searchingPaths.Add("/usr/X11R6/lib/X11/fonts");
@@ -93,6 +93,7 @@ namespace PdfSharp.Drawing
                 try
                 {
                     fileNames = Directory.GetFiles(searchingPath, "*.ttf", SearchOption.AllDirectories).ToList();
+                    fileNames.AddRange(Directory.GetFiles(searchingPath, "*.TTF", SearchOption.AllDirectories).ToList());
                 }
                 catch (Exception ex)
                 {
@@ -111,6 +112,21 @@ namespace PdfSharp.Drawing
                         {
                             FontFilePaths.Add(fontName, fileName);
                             Debug.WriteLine($"Add font {fontName}: {fileName}");
+                        }
+                        else
+                        {
+                            if (fileName.ToLower().IndexOf("bold") > 0 
+                                || fileName.ToLower().IndexOf("italic") > 0
+                                || fileName.ToLower().IndexOf("oblique") > 0
+                                || fileName.ToLower().IndexOf("light") > 0)
+                            {
+                                Debug.WriteLine($"Exists font {fontName}: {fileName}");
+                            }
+                            else
+                            {
+                                FontFilePaths[fontName] = fileName;
+                                Debug.WriteLine($"Replace font {fontName} with: {fileName}");
+                            }
                         }
                     }
                     catch (Exception ex)

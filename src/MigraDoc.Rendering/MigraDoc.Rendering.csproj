@@ -62,6 +62,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MigraDoc.DocumentObjectModel\MigraDoc.DocumentObjectModel.csproj" />
-    <ProjectReference Include="..\PdfSharp.Charting\PdfSharp.Charting.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PdfSharpCore.PdfSharp.Charting" Version="1.50.0-beta5-3" />
   </ItemGroup>
 </Project>

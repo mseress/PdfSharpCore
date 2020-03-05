@@ -41,6 +41,11 @@ namespace PdfSharp.Pdf.Advanced
     /// </summary>
     internal sealed class PdfCrossReferenceTable  // Must not be derive from PdfObject.
     {
+        /// <summary>
+        /// This is a hack that is needed to be able to incorporate PdfPages from other documents.
+        /// </summary>
+        public const bool HACK_ENABLE_REFERENCE_CHECK = false;
+        
         public PdfCrossReferenceTable(PdfDocument document)
         {
             _document = document;
@@ -255,7 +260,11 @@ namespace PdfSharp.Pdf.Advanced
             {
                 if (!ObjectTable.ContainsKey(iref.ObjectID))
                     GetType();
-                Debug.Assert(ObjectTable.ContainsKey(iref.ObjectID));
+
+                if (HACK_ENABLE_REFERENCE_CHECK)
+                {
+                    Debug.Assert(ObjectTable.ContainsKey(iref.ObjectID));                    
+                }
 
                 if (iref.Value == null)
                     GetType();
@@ -492,7 +501,11 @@ namespace PdfSharp.Pdf.Advanced
                                 GetType();
                                 Debug.WriteLine(String.Format("Bad iref: {0}", iref.ObjectID.ToString()));
                             }
-                            Debug.Assert(ReferenceEquals(iref.Document, _document) || iref.Document == null, "External object detected!");
+
+                            if (HACK_ENABLE_REFERENCE_CHECK)
+                            {
+                                Debug.Assert(ReferenceEquals(iref.Document, _document) || iref.Document == null, "External object detected!");                      
+                            }
 #if DEBUG_
                             if (iref.ObjectID.ObjectNumber == 23)
                                 GetType();
@@ -511,7 +524,12 @@ namespace PdfSharp.Pdf.Advanced
                                         Debug.Assert(iref.Value != null);
                                         value = iref.Value;
                                     }
-                                    Debug.Assert(ReferenceEquals(iref.Document, _document));
+
+                                    if (HACK_ENABLE_REFERENCE_CHECK)
+                                    {
+                                        Debug.Assert(ReferenceEquals(iref.Document, _document));    
+                                    }
+                                    
                                     objects.Add(iref, null);
                                     //Debug.WriteLine(String.Format("objects.Add('{0}', null);", iref.ObjectID.ToString()));
                                     if (value is PdfArray || value is PdfDictionary)

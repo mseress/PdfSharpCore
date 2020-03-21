@@ -30,18 +30,16 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using PdfSharp.Fonts;
 #if CORE || GDI
 using GdiFont = System.Drawing.Font;
 #endif
-using PdfSharp.Internal;
 using PdfSharp.Fonts.OpenType;
-using System.Drawing;
 using System.Reflection;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using PdfSharp.Drawing.Fonts;
 
 namespace PdfSharp.Drawing
 {
@@ -61,10 +59,13 @@ namespace PdfSharp.Drawing
         // Signature of a true type collection font.
         const uint ttcf = 0x66637474;
 
+        public const string FALLBACK_FONT = "stsong.ttf";
+
         /// <summary>
         /// (fontName, fileName)
         /// </summary>
-        internal static Dictionary<string, string> FontFilePaths = new Dictionary<string, string>();
+        private static readonly Dictionary<XFontSourceKey, string> _fontFilePaths = new Dictionary<XFontSourceKey, string>();
+
         static XFontSource()
         {
             var searchingPaths = new List<string>();
@@ -92,8 +93,9 @@ namespace PdfSharp.Drawing
                 var fileNames = new List<string>();
                 try
                 {
-                    fileNames = Directory.GetFiles(searchingPath, "*.ttf", SearchOption.AllDirectories).ToList();
-                    fileNames.AddRange(Directory.GetFiles(searchingPath, "*.TTF", SearchOption.AllDirectories).ToList());
+                    fileNames = Directory.GetFiles(searchingPath, "*", SearchOption.AllDirectories)
+                        .Where(f => Path.GetExtension(f).ToLower() == ".ttf")
+                        .ToList();
                 }
                 catch (Exception ex)
                 {
@@ -101,32 +103,16 @@ namespace PdfSharp.Drawing
                     continue;
                 }
 
-                foreach (var fileName in fileNames)
+                foreach (var filePath in fileNames)
                 {
                     try
                     {
-                        var fontCollection = new System.Drawing.Text.PrivateFontCollection();
-                        fontCollection.AddFontFile(fileName);
-                        var fontName = fontCollection.Families[0].Name;
-                        if (!FontFilePaths.ContainsKey(fontName))
+                        var fontStyle = TtfHelper.GetFontStyle(filePath);
+                        var key = new XFontSourceKey(TtfHelper.GetFontFamilyName(filePath), fontStyle);
+                        if (!_fontFilePaths.ContainsKey(key))
                         {
-                            FontFilePaths.Add(fontName, fileName);
-                            Debug.WriteLine($"Add font {fontName}: {fileName}");
-                        }
-                        else
-                        {
-                            if (fileName.ToLower().IndexOf("bold") > 0 
-                                || fileName.ToLower().IndexOf("italic") > 0
-                                || fileName.ToLower().IndexOf("oblique") > 0
-                                || fileName.ToLower().IndexOf("light") > 0)
-                            {
-                                Debug.WriteLine($"Exists font {fontName}: {fileName}");
-                            }
-                            else
-                            {
-                                FontFilePaths[fontName] = fileName;
-                                Debug.WriteLine($"Replace font {fontName} with: {fileName}");
-                            }
+                            _fontFilePaths.Add(key, filePath);
+                            Debug.WriteLine($"Added font '{key.FontFamilyName}': {filePath}");
                         }
                     }
                     catch (Exception ex)
@@ -168,31 +154,24 @@ namespace PdfSharp.Drawing
             return fontSource;
         }
 
-        static byte[] ReadFontBytesFromGdi(GdiFont gdiFont)
+        private static byte[] ReadFontBytesFromGdi(GdiFont gdiFont)
         {
-            var assembly = Assembly.GetAssembly(typeof(XFontSource));
-            var fontName = gdiFont.Name;
-            Stream fontStream = null;
+            var fontKey = new XFontSourceKey(gdiFont.Name, gdiFont.Style);
+            if (_fontFilePaths.ContainsKey(fontKey))
             {
-                if (FontFilePaths.ContainsKey(fontName))
-                {
-                    var fileName = FontFilePaths[fontName];
-                    fontStream = File.OpenRead(fileName);
-                    Debug.WriteLine($"{fileName} retrieved.");
-                }
+                var filePath = _fontFilePaths[fontKey];
+                Debug.WriteLine($"Retrieving font '{fontKey.ToString()}' from {filePath}");
+                return File.ReadAllBytes(filePath);
             }
 
-            // 3.default
-            if (fontStream == null)
+            // use embedded resource font if the specified one is not found            
+            using (var fontStream = Assembly.GetAssembly(typeof(XFontSource)).GetManifestResourceStream($"PdfSharp.Assets.{FALLBACK_FONT}"))
             {
-                fontStream = assembly.GetManifestResourceStream($"PdfSharp.Assets.stsong.ttf");
-                Debug.WriteLine($"{fontName} not found, replaced by default stsong.ttf");
+                Debug.WriteLine($"'{fontKey.ToString()}' not found, falling back by default to '{FALLBACK_FONT}'.");
+                var fontData = new byte[fontStream.Length];
+                fontStream.Read(fontData, 0, (int)fontStream.Length);
+                return fontData;
             }
-
-            // to output
-            var fontData = new byte[fontStream.Length];
-            fontStream.Read(fontData, 0, (int)fontStream.Length);
-            return fontData;
         }
 
         static XFontSource GetOrCreateFrom(string typefaceKey, byte[] fontBytes)
@@ -294,6 +273,52 @@ namespace PdfSharp.Drawing
         {
             // The key is converted to a value a human can remember during debugging.
             get { return String.Format(CultureInfo.InvariantCulture, "XFontSource: '{0}', keyhash={1}", FontName, Key % 99991 /* largest prime number less than 100000 */); }
+        }
+
+        /// <summary>
+        /// A key that combines the font family name and the font style to uniquely identify a specific font.
+        /// </summary>
+        private struct XFontSourceKey : IEquatable<XFontSourceKey>
+        {
+            public string FontFamilyName { get; set; }
+
+            public System.Drawing.FontStyle FontStyle { get; set; }
+
+            public XFontSourceKey(string fontFamilyName, System.Drawing.FontStyle fontStyle)
+            {
+                if (String.IsNullOrWhiteSpace(fontFamilyName))
+                {
+                    throw new ArgumentException("Value cannot be null or empty.", nameof(fontFamilyName));
+                }
+
+                this.FontFamilyName = fontFamilyName;
+                this.FontStyle = fontStyle;
+            }
+
+            public bool Equals(XFontSourceKey other)
+            {
+                return this.FontStyle == other.FontStyle && this.FontFamilyName == other.FontFamilyName;
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (obj is XFontSourceKey fontSourceKey)
+                {
+                    return this.Equals(fontSourceKey);
+                }
+
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                return this.FontFamilyName.GetHashCode() + this.FontStyle.GetHashCode();
+            }
+
+            public override string ToString()
+            {
+                return $"{this.FontFamilyName}, {this.FontStyle.ToString()}";
+            }
         }
     }
 }

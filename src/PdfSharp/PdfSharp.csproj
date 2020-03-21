@@ -68,8 +68,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="Assets\arial.ttf" />
+    <None Remove="Assets\stsong.ttf" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Assets\stsong.ttf" />
     <EmbeddedResource Include="Resources\Messages.de.restext" />
     <EmbeddedResource Include="Resources\Messages.restext" />
     <None Include="StrongnameKey.snk" />
